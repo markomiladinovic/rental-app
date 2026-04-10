@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Section from "@/components/ui/Section";
 import ProductCard from "@/components/ui/Card";
 import type { Product } from "@/data/products";
@@ -19,40 +19,38 @@ export default function RentalsPage() {
   }, []);
 
   // Fetch availability for all products
-  const fetchAvailability = useCallback(async (productList: Product[]) => {
+  useEffect(() => {
+    if (products.length === 0) return;
+
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0];
     const future = new Date();
     future.setMonth(future.getMonth() + 3);
     const futureStr = future.toISOString().split("T")[0];
 
-    const dates: Record<string, string | null> = {};
-    await Promise.all(
-      productList.map(async (p) => {
+    Promise.all(
+      products.map(async (p) => {
         const res = await fetch(`/api/reservations/availability?productId=${p.id}&from=${todayStr}&to=${futureStr}`);
-        if (!res.ok) return;
+        if (!res.ok) return [p.id, undefined] as const;
         const data = await res.json();
         const booked = new Set<string>(data.bookedDates || []);
-        if (booked.has(todayStr)) {
-          const d = new Date(today);
-          for (let i = 0; i < 90; i++) {
-            d.setDate(d.getDate() + 1);
-            const ds = d.toISOString().split("T")[0];
-            if (!booked.has(ds)) {
-              dates[p.id] = ds;
-              return;
-            }
-          }
-          dates[p.id] = null;
+        if (!booked.has(todayStr)) return [p.id, undefined] as const;
+        const d = new Date(today);
+        for (let i = 0; i < 90; i++) {
+          d.setDate(d.getDate() + 1);
+          const ds = d.toISOString().split("T")[0];
+          if (!booked.has(ds)) return [p.id, ds] as const;
         }
+        return [p.id, null] as const;
       })
-    );
-    setNextFreeDates(dates);
-  }, []);
-
-  useEffect(() => {
-    if (products.length > 0) fetchAvailability(products);
-  }, [products, fetchAvailability]);
+    ).then((results) => {
+      const dates: Record<string, string | null> = {};
+      for (const [id, date] of results) {
+        if (date !== undefined) dates[id] = date;
+      }
+      setNextFreeDates(dates);
+    });
+  }, [products]);
 
   const filtered = useMemo(() => {
     let result = activeCategory === "all"
