@@ -6,7 +6,30 @@ import Button from "@/components/ui/Button";
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
   const set = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSend = async () => {
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setSent(true);
+      } else {
+        setError("Greška pri slanju poruke");
+      }
+    } catch {
+      setError("Greška pri slanju poruke");
+    } finally {
+      setSending(false);
+    }
+  };
 
   const inputClass = "w-full bg-snow border border-silver rounded-xl px-4 py-3 text-sm text-midnight focus:outline-none focus:border-ocean transition-colors";
   const labelClass = "block text-sm font-semibold text-slate-dark mb-2";
@@ -75,13 +98,16 @@ export default function ContactPage() {
                     className={inputClass}
                   />
                 </div>
+                {error && (
+                  <p className="text-rose text-sm font-medium bg-rose/10 px-4 py-2.5 rounded-xl">{error}</p>
+                )}
                 <Button
-                  onClick={() => setSent(true)}
-                  disabled={!form.name || !form.email || !form.message}
+                  onClick={handleSend}
+                  disabled={!form.name || !form.email || !form.message || sending}
                   size="lg"
                   className="w-full"
                 >
-                  Pošalji poruku
+                  {sending ? "Slanje..." : "Pošalji poruku"}
                 </Button>
               </div>
             )}
