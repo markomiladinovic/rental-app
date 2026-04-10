@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import Section from "@/components/ui/Section";
-import { CATEGORIES } from "@/data/products";
+import { getCategories } from "@/lib/data";
 
-export default function Categories() {
+export default async function Categories() {
+  const CATEGORIES = await getCategories();
   return (
     <Section>
       <div className="text-center mb-12 md:mb-16">
@@ -28,6 +29,7 @@ export default function Categories() {
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
+              unoptimized={cat.image.startsWith("/uploads")}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-midnight/80 via-midnight/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6">

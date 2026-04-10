@@ -1,8 +1,9 @@
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
-import { products, CATEGORIES } from "@/data/products";
+import { getProducts, getCategories } from "@/lib/data";
 
-export default function Pricing() {
+export default async function Pricing() {
+  const [products, CATEGORIES] = await Promise.all([getProducts(), getCategories()]);
   return (
     <Section>
       <div className="text-center mb-12 md:mb-16">

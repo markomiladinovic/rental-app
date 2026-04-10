@@ -15,8 +15,8 @@ export type Product = {
 };
 
 export const CATEGORIES = [
-  { id: "sup", label: "SUP Board", icon: "🏄", description: "Istraži vodu na SUP dasci", image: "https://images.unsplash.com/photo-1526188717906-ab4a2f949f48?w=800&q=80" },
-  { id: "kayak", label: "Kajak", icon: "🛶", description: "Veslaj kroz prirodu", image: "https://images.unsplash.com/photo-1604715892639-f491adb0ef44?w=800&q=80" },
+  { id: "sup", label: "SUP Board", icon: "🏄", description: "Istraži vodu na SUP dasci", image: "https://images.unsplash.com/photo-1531722569936-825d3dd91b15?w=800&q=80" },
+  { id: "kayak", label: "Kajak", icon: "🛶", description: "Veslaj kroz prirodu", image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f?w=800&q=80" },
   { id: "city-bike", label: "City Bike", icon: "🚲", description: "Razgledaj grad na dva točka", image: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&q=80" },
   { id: "mtb", label: "MTB Bike", icon: "🚵", description: "Osvoji planinske staze", image: "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?w=800&q=80" },
 ];
