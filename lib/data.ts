@@ -2,6 +2,8 @@ import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { products as defaultProducts, CATEGORIES as defaultCategories } from "@/data/products";
 import type { Product } from "@/data/products";
+import { galleryImages as defaultGallery } from "@/data/gallery";
+import type { GalleryImage } from "@/data/gallery";
 
 export type Category = {
   id: string;
@@ -14,6 +16,7 @@ export type Category = {
 const DATA_DIR = path.join(process.cwd(), "data");
 const PRODUCTS_FILE = path.join(DATA_DIR, "products.json");
 const CATEGORIES_FILE = path.join(DATA_DIR, "categories.json");
+const GALLERY_FILE = path.join(DATA_DIR, "gallery.json");
 
 async function ensureDataDir() {
   await mkdir(DATA_DIR, { recursive: true });
@@ -45,4 +48,18 @@ export async function getCategories(): Promise<Category[]> {
 export async function saveCategories(categories: Category[]): Promise<void> {
   await ensureDataDir();
   await writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2));
+}
+
+export async function getGallery(): Promise<GalleryImage[]> {
+  try {
+    const data = await readFile(GALLERY_FILE, "utf-8");
+    return JSON.parse(data);
+  } catch {
+    return defaultGallery;
+  }
+}
+
+export async function saveGallery(images: GalleryImage[]): Promise<void> {
+  await ensureDataDir();
+  await writeFile(GALLERY_FILE, JSON.stringify(images, null, 2));
 }

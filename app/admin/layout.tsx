@@ -6,6 +6,7 @@ const ADMIN_NAV = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
   { href: "/admin/products", label: "Proizvodi", icon: "📦" },
   { href: "/admin/categories", label: "Kategorije", icon: "🏷️" },
+  { href: "/admin/gallery", label: "Galerija", icon: "🖼️" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
