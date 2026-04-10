@@ -10,6 +10,7 @@ const FOOTER_LINKS = {
   "Kompanija": [
     { href: "/about", label: "O nama" },
     { href: "/contact", label: "Kontakt" },
+    { href: "/admin", label: "Admin" },
   ],
   "Info": [
     { href: "/booking", label: "Kako rezervisati" },
