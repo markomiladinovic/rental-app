@@ -1,19 +1,33 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { products } from "@/data/products";
 import Button from "@/components/ui/Button";
 import Section from "@/components/ui/Section";
 import ProductCard from "@/components/ui/Card";
+import type { Product } from "@/data/products";
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
-  const product = products.find((p) => p.slug === slug);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [duration, setDuration] = useState<"hour" | "day">("hour");
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    fetch("/api/products").then((r) => r.json()).then(setProducts);
+  }, []);
+
+  const product = products.find((p) => p.slug === slug);
+
+  if (products.length === 0) {
+    return (
+      <Section className="pt-32">
+        <div className="text-center py-20 text-muted">Učitavanje...</div>
+      </Section>
+    );
+  }
 
   if (!product) {
     return (
@@ -59,6 +73,7 @@ export default function ProductDetailPage() {
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                   priority
+                  unoptimized={images[selectedImage].startsWith("/uploads")}
                 />
               </div>
               {images.length > 1 && (
@@ -71,7 +86,7 @@ export default function ProductDetailPage() {
                         selectedImage === i ? "border-ocean" : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <Image src={img} alt="" fill sizes="80px" className="object-cover" />
+                      <Image src={img} alt="" fill sizes="80px" className="object-cover" unoptimized={img.startsWith("/uploads")} />
                     </button>
                   ))}
                 </div>

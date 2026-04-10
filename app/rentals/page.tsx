@@ -1,12 +1,21 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Section from "@/components/ui/Section";
 import ProductCard from "@/components/ui/Card";
-import { products, CATEGORIES } from "@/data/products";
+import type { Product } from "@/data/products";
+
+type Category = { id: string; label: string; icon: string; description: string; image: string };
 
 export default function RentalsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("default");
+
+  useEffect(() => {
+    fetch("/api/products").then((r) => r.json()).then(setProducts);
+    fetch("/api/categories").then((r) => r.json()).then(setCategories);
+  }, []);
 
   const filtered = useMemo(() => {
     let result = activeCategory === "all"
@@ -17,7 +26,7 @@ export default function RentalsPage() {
     if (sortBy === "price-desc") result = [...result].sort((a, b) => b.pricePerHour - a.pricePerHour);
 
     return result;
-  }, [activeCategory, sortBy]);
+  }, [activeCategory, sortBy, products]);
 
   return (
     <>
@@ -51,7 +60,7 @@ export default function RentalsPage() {
             >
               Sve
             </button>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}

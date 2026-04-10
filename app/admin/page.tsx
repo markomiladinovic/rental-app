@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { products, CATEGORIES } from "@/data/products";
+import { getProducts, getCategories } from "@/lib/data";
 
-export default function AdminDashboard() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboard() {
+  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
   const available = products.filter((p) => p.available).length;
   const unavailable = products.filter((p) => !p.available).length;
 
@@ -24,7 +27,7 @@ export default function AdminDashboard() {
         </div>
         <div className="bg-white rounded-2xl p-6 border border-cloud">
           <p className="text-muted text-sm mb-1">Kategorije</p>
-          <p className="font-heading font-bold text-3xl text-ocean">{CATEGORIES.length}</p>
+          <p className="font-heading font-bold text-3xl text-ocean">{categories.length}</p>
         </div>
       </div>
 
@@ -56,7 +59,7 @@ export default function AdminDashboard() {
             </Link>
           </div>
           <div className="space-y-3">
-            {CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const count = products.filter((p) => p.category === cat.id).length;
               return (
                 <div key={cat.id} className="flex items-center justify-between text-sm">

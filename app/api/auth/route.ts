@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import { getAdminByEmail } from "@/lib/data";
 
 const SESSION_COOKIE = "admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours
@@ -8,20 +9,15 @@ function generateToken(): string {
   const secret = process.env.ADMIN_SESSION_SECRET || "fallback-secret";
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).slice(2);
-  // Simple token: base64(secret-timestamp-random)
   return Buffer.from(`${secret}-${timestamp}-${random}`).toString("base64");
 }
 
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json();
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
 
-  if (!adminEmail || !adminPassword) {
-    return Response.json({ error: "Admin kredencijali nisu konfigurisani" }, { status: 500 });
-  }
+  const admin = await getAdminByEmail(email);
 
-  if (email !== adminEmail || password !== adminPassword) {
+  if (!admin || admin.password !== password) {
     return Response.json({ error: "Pogrešan email ili lozinka" }, { status: 401 });
   }
 

@@ -1,8 +1,8 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { products } from "@/data/products";
+import type { Product } from "@/data/products";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 
@@ -19,6 +19,11 @@ function BookingContent() {
   const productSlug = searchParams.get("product");
   const durationParam = searchParams.get("duration") || "hour";
   const quantityParam = parseInt(searchParams.get("quantity") || "1");
+
+  const [products, setProducts] = useState<Product[]>([]);
+  useEffect(() => {
+    fetch("/api/products").then((r) => r.json()).then(setProducts);
+  }, []);
 
   const product = products.find((p) => p.slug === productSlug);
 
