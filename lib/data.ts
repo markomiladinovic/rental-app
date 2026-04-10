@@ -137,6 +137,24 @@ export async function getCategories(): Promise<Category[]> {
   return data;
 }
 
+export async function createCategory(category: Category): Promise<Category | null> {
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({
+      id: category.id,
+      label: category.label,
+      icon: category.icon,
+      description: category.description,
+      image: category.image,
+      sort_order: category.sort_order || 0,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data;
+}
+
 export async function updateCategory(category: Category): Promise<Category | null> {
   const { data, error } = await supabase
     .from("categories")
