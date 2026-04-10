@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 
@@ -7,10 +8,12 @@ export default function AboutPage() {
       {/* Hero */}
       <div className="relative pt-20">
         <div className="aspect-[3/1] md:aspect-[4/1] overflow-hidden">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80"
             alt="Mountains"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-midnight/60 to-transparent" />
         </div>
