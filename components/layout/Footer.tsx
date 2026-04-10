@@ -11,8 +11,8 @@ const FOOTER_LINKS = {
     { href: "/about", label: "O nama" },
     { href: "/contact", label: "Kontakt" },
   ],
-  "Podrška": [
-    { href: "/contact", label: "FAQ" },
+  "Info": [
+    { href: "/booking", label: "Kako rezervisati" },
     { href: "/contact", label: "Pomoć" },
   ],
 };

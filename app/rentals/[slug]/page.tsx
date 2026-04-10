@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { products } from "@/data/products";
 import Button from "@/components/ui/Button";
@@ -50,11 +51,14 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Gallery */}
             <div>
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-4">
-                <img
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-4">
+                <Image
                   src={images[selectedImage]}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                  priority
                 />
               </div>
               {images.length > 1 && (
@@ -63,11 +67,11 @@ export default function ProductDetailPage() {
                     <button
                       key={i}
                       onClick={() => setSelectedImage(i)}
-                      className={`w-20 h-16 rounded-xl overflow-hidden border-2 transition-all ${
+                      className={`relative w-20 h-16 rounded-xl overflow-hidden border-2 transition-all ${
                         selectedImage === i ? "border-ocean" : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <Image src={img} alt="" fill sizes="80px" className="object-cover" />
                     </button>
                   ))}
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { products } from "@/data/products";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
@@ -234,7 +235,9 @@ function BookingContent() {
             <h2 className="font-heading font-semibold text-xl text-midnight">Potvrda rezervacije</h2>
             <div className="bg-snow rounded-2xl p-6 border border-cloud space-y-4">
               <div className="flex items-center gap-4 pb-4 border-b border-silver">
-                <img src={product.image} alt="" className="w-20 h-16 rounded-xl object-cover" />
+                <div className="relative w-20 h-16 rounded-xl overflow-hidden">
+                  <Image src={product.image} alt="" fill sizes="80px" className="object-cover" />
+                </div>
                 <div>
                   <h3 className="font-heading font-bold text-midnight">{product.name}</h3>
                   <p className="text-muted text-sm">{product.categoryLabel}</p>

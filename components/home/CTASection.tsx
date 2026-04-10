@@ -1,13 +1,15 @@
+import Image from "next/image";
 import Button from "@/components/ui/Button";
 
 export default function CTASection() {
   return (
     <section className="relative py-24 md:py-32 overflow-hidden">
       <div className="absolute inset-0">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1502680390548-bdbac40e4a5a?w=1920&q=80"
           alt="Adventure awaits"
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-midnight/70" />
       </div>

@@ -109,12 +109,18 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Map placeholder */}
-            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-cloud flex items-center justify-center">
-              <div className="text-center text-muted">
-                <p className="text-3xl mb-2">🗺️</p>
-                <p className="text-sm">Mapa lokacije</p>
-              </div>
+            {/* Map */}
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d90758.15441302927!2d20.3814828!3d44.8125449!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x475a7aa3d4b28ca1%3A0x76e1759df61e4805!2sBelgrade!5e0!3m2!1ssr!2srs!4v1"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Lokacija na mapi"
+              />
             </div>
           </div>
         </div>
