@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (res.ok) {
@@ -25,7 +26,7 @@ export default function AdminLoginPage() {
         router.refresh();
       } else {
         const data = await res.json();
-        setError(data.error || "Pogrešna lozinka");
+        setError(data.error || "Pogrešan email ili lozinka");
       }
     } catch {
       setError("Greška pri prijavljivanju");
@@ -42,10 +43,22 @@ export default function AdminLoginPage() {
             <span className="text-white font-bold text-lg">BA</span>
           </div>
           <h1 className="font-heading font-bold text-2xl text-midnight">Admin prijava</h1>
-          <p className="text-muted text-sm mt-1">Unesi lozinku za pristup</p>
+          <p className="text-muted text-sm mt-1">Unesi email i lozinku za pristup</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-cloud p-6 space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-slate-dark mb-2">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tvoj@email.com"
+              autoFocus
+              className="w-full bg-snow border border-silver rounded-xl px-4 py-3 text-sm text-midnight focus:outline-none focus:border-ocean transition-colors"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-semibold text-slate-dark mb-2">Lozinka</label>
             <input
@@ -53,7 +66,6 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              autoFocus
               className="w-full bg-snow border border-silver rounded-xl px-4 py-3 text-sm text-midnight focus:outline-none focus:border-ocean transition-colors"
             />
           </div>
@@ -64,7 +76,7 @@ export default function AdminLoginPage() {
 
           <button
             type="submit"
-            disabled={!password || loading}
+            disabled={!email || !password || loading}
             className="w-full bg-ocean hover:bg-ocean-dark text-white font-semibold py-3 rounded-xl transition-all shadow-cta disabled:opacity-50 cursor-pointer"
           >
             {loading ? "Prijavljivanje..." : "Prijavi se"}

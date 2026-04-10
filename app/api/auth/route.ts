@@ -13,15 +13,16 @@ function generateToken(): string {
 }
 
 export async function POST(request: NextRequest) {
-  const { password } = await request.json();
+  const { email, password } = await request.json();
+  const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
-  if (!adminPassword) {
-    return Response.json({ error: "Admin lozinka nije konfigurisana" }, { status: 500 });
+  if (!adminEmail || !adminPassword) {
+    return Response.json({ error: "Admin kredencijali nisu konfigurisani" }, { status: 500 });
   }
 
-  if (password !== adminPassword) {
-    return Response.json({ error: "Pogrešna lozinka" }, { status: 401 });
+  if (email !== adminEmail || password !== adminPassword) {
+    return Response.json({ error: "Pogrešan email ili lozinka" }, { status: 401 });
   }
 
   const token = generateToken();
