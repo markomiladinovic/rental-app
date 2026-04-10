@@ -125,18 +125,20 @@ export default function ProductDetailPage() {
               </p>
 
               {/* Features */}
-              <div className="mb-8">
-                <h3 className="font-heading font-semibold text-sm uppercase tracking-wider text-muted mb-3">
-                  Uključeno
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.features.map((f) => (
-                    <span key={f} className="bg-snow text-slate-dark text-sm px-4 py-2 rounded-xl border border-cloud">
-                      {f}
-                    </span>
-                  ))}
+              {product.features.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="font-heading font-semibold text-sm uppercase tracking-wider text-muted mb-3">
+                    Uključeno
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.features.map((f) => (
+                      <span key={f} className="bg-snow text-slate-dark text-sm px-4 py-2 rounded-xl border border-cloud">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Pricing */}
               <div className="bg-snow rounded-2xl p-6 border border-cloud mb-6">
