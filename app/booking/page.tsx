@@ -168,13 +168,75 @@ function BookingContent() {
 
   if (!product) {
     return (
-      <Section className="pt-32">
-        <div className="text-center py-20">
-          <p className="text-5xl mb-6">😕</p>
-          <h1 className="font-heading font-bold text-2xl text-midnight mb-4">Proizvod nije izabran</h1>
-          <Button href="/rentals">Izaberi opremu</Button>
+      <>
+        <div className="pt-28 pb-12 md:pt-36 md:pb-16 bg-snow">
+          <div className="mx-auto max-w-7xl px-5 md:px-16">
+            <p className="text-ocean text-sm font-semibold uppercase tracking-[0.15em] mb-3">
+              Vodič
+            </p>
+            <h1 className="font-heading font-bold text-3xl md:text-5xl text-midnight mb-4">
+              Kako rezervisati
+            </h1>
+            <p className="text-subtle text-lg max-w-2xl">
+              Rezervacija opreme je brza i jednostavna. Prati ove korake i oprema te čeka.
+            </p>
+          </div>
         </div>
-      </Section>
+        <Section>
+          <div className="max-w-3xl mx-auto">
+            <div className="space-y-8">
+              {[
+                {
+                  step: "01",
+                  icon: "🔍",
+                  title: "Izaberi opremu",
+                  desc: "Idi na stranicu Oprema, pregledaj ponudu SUP dasaka, kajaka, gradskih i MTB bicikala. Klikni na proizvod koji te zanima da vidiš detalje i cenu.",
+                },
+                {
+                  step: "02",
+                  icon: "⏱️",
+                  title: "Odaberi trajanje i količinu",
+                  desc: "Na stranici proizvoda izaberi da li želiš da iznajmiš po satu ili po danu, podesi količinu i klikni dugme Rezerviši.",
+                },
+                {
+                  step: "03",
+                  icon: "📅",
+                  title: "Izaberi datum i vreme",
+                  desc: "Na kalendaru izaberi slobodan datum (zauzeti su označeni crvenom). Izaberi vreme preuzimanja i trajanje.",
+                },
+                {
+                  step: "04",
+                  icon: "📝",
+                  title: "Unesi svoje podatke",
+                  desc: "Ostavi ime, email i broj telefona kako bismo te kontaktirali za potvrdu. Možeš dodati i napomenu sa posebnim zahtevima.",
+                },
+                {
+                  step: "05",
+                  icon: "✅",
+                  title: "Potvrdi rezervaciju",
+                  desc: "Pregledaj sve detalje i potvrdi. Plaćanje je na licu mesta pri preuzimanju opreme — bez unapred plaćanja online.",
+                },
+              ].map((item) => (
+                <div key={item.step} className="flex gap-5">
+                  <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-ocean/10 flex items-center justify-center text-2xl">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <div className="text-ocean font-bold text-sm mb-1">{item.step}</div>
+                    <h3 className="font-heading font-bold text-lg text-midnight mb-2">{item.title}</h3>
+                    <p className="text-subtle leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12 pt-8 border-t border-cloud">
+              <p className="text-subtle mb-6">Spreman? Izaberi opremu i kreni!</p>
+              <Button href="/rentals" size="lg">Pogledaj opremu</Button>
+            </div>
+          </div>
+        </Section>
+      </>
     );
   }
 
