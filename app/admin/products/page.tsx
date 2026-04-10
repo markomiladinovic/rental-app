@@ -349,9 +349,20 @@ function EditProduct({
   saving: boolean;
 }) {
   const [form, setForm] = useState<Product>({ ...product });
+  const [featureInput, setFeatureInput] = useState("");
 
   const set = (key: keyof Product, value: string | number | boolean) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const addFeature = () => {
+    if (!featureInput.trim()) return;
+    setForm((prev) => ({ ...prev, features: [...prev.features, featureInput.trim()] }));
+    setFeatureInput("");
+  };
+
+  const removeFeature = (index: number) => {
+    setForm((prev) => ({ ...prev, features: prev.features.filter((_, i) => i !== index) }));
+  };
 
   return (
     <div className="border-t border-cloud p-6 bg-snow space-y-5">
@@ -423,6 +434,38 @@ function EditProduct({
         onImageChange={(url) => set("image", url)}
         label="Glavna slika"
       />
+
+      {/* Features */}
+      <div>
+        <label className={labelClass}>Uključena oprema</label>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={featureInput}
+            onChange={(e) => setFeatureInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
+            placeholder="npr. Veslo, Pumpa, Kaciga..."
+            className={inputClass}
+          />
+          <button
+            type="button"
+            onClick={addFeature}
+            className="bg-cloud hover:bg-silver text-midnight text-sm font-semibold px-4 py-2.5 rounded-xl transition-all flex-shrink-0 cursor-pointer"
+          >
+            Dodaj
+          </button>
+        </div>
+        {form.features.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {form.features.map((f, i) => (
+              <span key={i} className="bg-white text-slate-dark text-sm px-3 py-1.5 rounded-xl border border-cloud flex items-center gap-1.5">
+                {f}
+                <button onClick={() => removeFeature(i)} className="text-muted hover:text-rose cursor-pointer">×</button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="flex justify-end gap-3 pt-2">
         <button
