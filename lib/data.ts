@@ -143,6 +143,116 @@ export async function saveGallery(images: GalleryImage[]): Promise<void> {
   }
 }
 
+// --- Reservations ---
+
+export type Reservation = {
+  id: string;
+  productId: string;
+  productName: string;
+  durationType: "hour" | "day";
+  quantity: number;
+  startDate: string;
+  startTime: string;
+  hours: number | null;
+  endDate: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  note: string;
+  totalPrice: number;
+  status: "confirmed" | "cancelled" | "completed";
+  createdAt: string;
+};
+
+function mapReservation(r: Record<string, unknown>): Reservation {
+  return {
+    id: r.id as string,
+    productId: r.product_id as string,
+    productName: r.product_name as string,
+    durationType: r.duration_type as "hour" | "day",
+    quantity: r.quantity as number,
+    startDate: r.start_date as string,
+    startTime: r.start_time as string,
+    hours: r.hours as number | null,
+    endDate: r.end_date as string,
+    customerName: r.customer_name as string,
+    customerEmail: r.customer_email as string,
+    customerPhone: r.customer_phone as string,
+    note: (r.note as string) || "",
+    totalPrice: r.total_price as number,
+    status: r.status as "confirmed" | "cancelled" | "completed",
+    createdAt: r.created_at as string,
+  };
+}
+
+export async function createReservation(data: Omit<Reservation, "id" | "status" | "createdAt">): Promise<Reservation | null> {
+  const { data: row, error } = await supabase
+    .from("reservations")
+    .insert({
+      product_id: data.productId,
+      product_name: data.productName,
+      duration_type: data.durationType,
+      quantity: data.quantity,
+      start_date: data.startDate,
+      start_time: data.startTime,
+      hours: data.hours,
+      end_date: data.endDate,
+      customer_name: data.customerName,
+      customer_email: data.customerEmail,
+      customer_phone: data.customerPhone,
+      note: data.note,
+      total_price: data.totalPrice,
+    })
+    .select()
+    .single();
+
+  if (error || !row) return null;
+  return mapReservation(row);
+}
+
+export async function getReservationsForProduct(
+  productId: string,
+  fromDate: string,
+  toDate: string
+): Promise<Reservation[]> {
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("product_id", productId)
+    .neq("status", "cancelled")
+    .lte("start_date", toDate)
+    .gte("end_date", fromDate)
+    .order("start_date");
+
+  if (error || !data) return [];
+  return data.map(mapReservation);
+}
+
+export async function getAllReservations(): Promise<Reservation[]> {
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map(mapReservation);
+}
+
+export async function updateReservationStatus(
+  id: string,
+  status: "confirmed" | "cancelled" | "completed"
+): Promise<Reservation | null> {
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return mapReservation(data);
+}
+
 // --- Admins ---
 
 export async function getAdminByEmail(email: string): Promise<Admin | null> {

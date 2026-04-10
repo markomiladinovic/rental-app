@@ -1,10 +1,15 @@
 import Link from "next/link";
-import { getProducts, getCategories } from "@/lib/data";
+import { getProducts, getCategories, getAllReservations } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+  const [products, categories, reservations] = await Promise.all([
+    getProducts(), getCategories(), getAllReservations(),
+  ]);
+  const todayStr = new Date().toISOString().split("T")[0];
+  const activeReservations = reservations.filter((r) => r.status === "confirmed");
+  const todayReservations = activeReservations.filter((r) => r.startDate === todayStr);
   const available = products.filter((p) => p.available).length;
   const unavailable = products.filter((p) => !p.available).length;
 
@@ -28,6 +33,27 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-2xl p-6 border border-cloud">
           <p className="text-muted text-sm mb-1">Kategorije</p>
           <p className="font-heading font-bold text-3xl text-ocean">{categories.length}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-2xl p-6 border border-cloud">
+          <p className="text-muted text-sm mb-1">Rezervacije danas</p>
+          <p className="font-heading font-bold text-3xl text-ocean">{todayReservations.length}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border border-cloud">
+          <p className="text-muted text-sm mb-1">Aktivne rezervacije</p>
+          <p className="font-heading font-bold text-3xl text-emerald">{activeReservations.length}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border border-cloud">
+          <p className="text-muted text-sm mb-1">Ukupno rezervacija</p>
+          <p className="font-heading font-bold text-3xl text-midnight">{reservations.length}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border border-cloud">
+          <p className="text-muted text-sm mb-1">Upravljaj</p>
+          <Link href="/admin/reservations" className="text-ocean font-bold text-lg hover:text-ocean-dark transition-colors">
+            Pogledaj sve →
+          </Link>
         </div>
       </div>
 

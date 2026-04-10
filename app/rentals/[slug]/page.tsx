@@ -14,6 +14,7 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [duration, setDuration] = useState<"hour" | "day">("hour");
   const [quantity, setQuantity] = useState(1);
+  const [todayBookings, setTodayBookings] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
@@ -40,6 +41,15 @@ export default function ProductDetailPage() {
       </Section>
     );
   }
+
+  // Fetch today's bookings for this product
+  useEffect(() => {
+    if (!product) return;
+    const today = new Date().toISOString().split("T")[0];
+    fetch(`/api/reservations/availability?productId=${product.id}&from=${today}&to=${today}`)
+      .then((r) => r.json())
+      .then((data) => setTodayBookings(data.reservations?.length || 0));
+  }, [product]);
 
   const price = duration === "hour" ? product.pricePerHour : product.pricePerDay;
   const total = price * quantity;
@@ -98,7 +108,16 @@ export default function ProductDetailPage() {
               <span className="inline-block bg-ocean/10 text-ocean text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
                 {product.categoryLabel}
               </span>
-              <h1 className="font-heading font-bold text-3xl md:text-4xl text-midnight mb-4">
+              {todayBookings !== null && (
+                <span className={`inline-block text-xs font-semibold px-3 py-1.5 rounded-full ml-2 ${
+                  todayBookings === 0
+                    ? "bg-emerald/10 text-emerald"
+                    : "bg-amber/10 text-amber"
+                }`}>
+                  {todayBookings === 0 ? "Dostupno danas" : `${todayBookings} rezervacija danas`}
+                </span>
+              )}
+              <h1 className="font-heading font-bold text-3xl md:text-4xl text-midnight mb-4 mt-2">
                 {product.name}
               </h1>
               <p className="text-subtle text-lg leading-relaxed mb-8">
