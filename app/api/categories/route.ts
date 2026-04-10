@@ -1,4 +1,4 @@
-import { getCategories, saveCategories } from "@/lib/data";
+import { getCategories, updateCategory } from "@/lib/data";
 
 export async function GET() {
   const categories = await getCategories();
@@ -7,15 +7,11 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   const category = await request.json();
-  const categories = await getCategories();
-  const index = categories.findIndex((c) => c.id === category.id);
+  const updated = await updateCategory(category);
 
-  if (index === -1) {
+  if (!updated) {
     return Response.json({ error: "Kategorija nije pronađena" }, { status: 404 });
   }
 
-  categories[index] = { ...categories[index], ...category };
-  await saveCategories(categories);
-
-  return Response.json(categories[index]);
+  return Response.json(updated);
 }

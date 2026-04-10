@@ -1,4 +1,4 @@
-import { getProducts, saveProducts } from "@/lib/data";
+import { getProducts, updateProduct } from "@/lib/data";
 
 export async function GET() {
   const products = await getProducts();
@@ -7,15 +7,11 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   const product = await request.json();
-  const products = await getProducts();
-  const index = products.findIndex((p) => p.id === product.id);
+  const updated = await updateProduct(product);
 
-  if (index === -1) {
+  if (!updated) {
     return Response.json({ error: "Proizvod nije pronađen" }, { status: 404 });
   }
 
-  products[index] = { ...products[index], ...product };
-  await saveProducts(products);
-
-  return Response.json(products[index]);
+  return Response.json(updated);
 }
