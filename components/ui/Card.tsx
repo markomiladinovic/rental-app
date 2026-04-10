@@ -4,9 +4,10 @@ import type { Product } from "@/data/products";
 
 type ProductCardProps = {
   product: Product;
+  nextFreeDate?: string | null;
 };
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, nextFreeDate }: ProductCardProps) {
   return (
     <Link
       href={`/rentals/${product.slug}`}
@@ -26,10 +27,22 @@ export default function ProductCard({ product }: ProductCardProps) {
         </span>
         {!product.available && (
           <div className="absolute inset-0 bg-midnight/50 flex items-center justify-center">
-            <span className="bg-white text-midnight text-sm font-bold px-4 py-2 rounded-full">
-              Nije dostupno
-            </span>
+            <div className="text-center">
+              <span className="bg-white text-midnight text-sm font-bold px-4 py-2 rounded-full block">
+                Nije dostupno
+              </span>
+              {nextFreeDate && (
+                <span className="bg-white/90 text-subtle text-xs font-medium px-3 py-1 rounded-full mt-2 block">
+                  Slobodno od {new Date(nextFreeDate).toLocaleDateString("sr-Latn-RS", { day: "numeric", month: "long" })}
+                </span>
+              )}
+            </div>
           </div>
+        )}
+        {product.available && nextFreeDate && (
+          <span className="absolute bottom-4 left-4 bg-amber/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+            Slobodno od {new Date(nextFreeDate).toLocaleDateString("sr-Latn-RS", { day: "numeric", month: "short" })}
+          </span>
         )}
       </div>
 

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Section from "@/components/ui/Section";
 import ProductCard from "@/components/ui/Card";
 import type { Product } from "@/data/products";
@@ -11,11 +11,48 @@ export default function RentalsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("default");
+  const [nextFreeDates, setNextFreeDates] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
     fetch("/api/categories").then((r) => r.json()).then(setCategories);
   }, []);
+
+  // Fetch availability for all products
+  const fetchAvailability = useCallback(async (productList: Product[]) => {
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    const future = new Date();
+    future.setMonth(future.getMonth() + 3);
+    const futureStr = future.toISOString().split("T")[0];
+
+    const dates: Record<string, string | null> = {};
+    await Promise.all(
+      productList.map(async (p) => {
+        const res = await fetch(`/api/reservations/availability?productId=${p.id}&from=${todayStr}&to=${futureStr}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const booked = new Set<string>(data.bookedDates || []);
+        if (booked.has(todayStr)) {
+          const d = new Date(today);
+          for (let i = 0; i < 90; i++) {
+            d.setDate(d.getDate() + 1);
+            const ds = d.toISOString().split("T")[0];
+            if (!booked.has(ds)) {
+              dates[p.id] = ds;
+              return;
+            }
+          }
+          dates[p.id] = null;
+        }
+      })
+    );
+    setNextFreeDates(dates);
+  }, []);
+
+  useEffect(() => {
+    if (products.length > 0) fetchAvailability(products);
+  }, [products, fetchAvailability]);
 
   const filtered = useMemo(() => {
     let result = activeCategory === "all"
@@ -101,7 +138,7 @@ export default function RentalsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} nextFreeDate={nextFreeDates[product.id]} />
             ))}
           </div>
         )}
