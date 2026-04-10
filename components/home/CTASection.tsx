@@ -6,10 +6,11 @@ export default function CTASection() {
     <section className="relative py-24 md:py-32 overflow-hidden">
       <div className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1502680390548-bdbac40e4a5a?w=1920&q=80"
+          src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80"
           alt="Adventure awaits"
           fill
           className="object-cover"
+          unoptimized
         />
         <div className="absolute inset-0 bg-midnight/70" />
       </div>
