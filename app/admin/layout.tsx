@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const ADMIN_NAV = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
@@ -11,6 +11,13 @@ const ADMIN_NAV = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch("/api/auth", { method: "DELETE" });
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <div className="min-h-screen bg-snow pt-20">
@@ -21,12 +28,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <h1 className="font-heading font-bold text-2xl text-midnight">Admin Panel</h1>
             <p className="text-muted text-sm">Upravljaj proizvodima, kategorijama i slikama</p>
           </div>
-          <Link
-            href="/"
-            className="text-sm text-ocean hover:text-ocean-dark transition-colors"
-          >
-            ← Nazad na sajt
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-sm text-ocean hover:text-ocean-dark transition-colors"
+            >
+              ← Nazad na sajt
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-rose hover:text-rose/80 font-medium transition-colors cursor-pointer"
+            >
+              Odjavi se
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
