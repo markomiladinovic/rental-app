@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { useScrolled } from "@/hooks/useScrollDirection";
 
 const NAV_LINKS = [
@@ -13,6 +14,10 @@ const NAV_LINKS = [
 export default function Navbar() {
   const scrolled = useScrolled(50);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  // Only use light (white) text on homepage hero
+  const isHeroPage = pathname === "/";
+  const useDark = scrolled || !isHeroPage;
 
   return (
     <header
@@ -29,7 +34,7 @@ export default function Navbar() {
             <span className="text-white font-bold text-sm">BA</span>
           </div>
           <span className={`font-heading font-bold text-xl tracking-tight transition-colors duration-300 ${
-            scrolled ? "text-midnight" : "text-white"
+            useDark ? "text-midnight" : "text-white"
           }`}>
             BoMa Adventures
           </span>
@@ -42,7 +47,7 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               className={`text-sm font-medium transition-colors duration-200 ${
-                scrolled ? "text-slate-dark hover:text-ocean" : "text-white/90 hover:text-white"
+                useDark ? "text-slate-dark hover:text-ocean" : "text-white/90 hover:text-white"
               }`}
             >
               {link.label}
@@ -62,9 +67,9 @@ export default function Navbar() {
           className="md:hidden flex flex-col gap-1.5 p-2"
           aria-label="Menu"
         >
-          <span className={`block w-6 h-0.5 transition-all duration-300 ${scrolled ? "bg-midnight" : "bg-white"} ${menuOpen ? "rotate-45 translate-y-2" : ""}`} />
-          <span className={`block w-6 h-0.5 transition-all duration-300 ${scrolled ? "bg-midnight" : "bg-white"} ${menuOpen ? "opacity-0" : ""}`} />
-          <span className={`block w-6 h-0.5 transition-all duration-300 ${scrolled ? "bg-midnight" : "bg-white"} ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+          <span className={`block w-6 h-0.5 transition-all duration-300 ${useDark ? "bg-midnight" : "bg-white"} ${menuOpen ? "rotate-45 translate-y-2" : ""}`} />
+          <span className={`block w-6 h-0.5 transition-all duration-300 ${useDark ? "bg-midnight" : "bg-white"} ${menuOpen ? "opacity-0" : ""}`} />
+          <span className={`block w-6 h-0.5 transition-all duration-300 ${useDark ? "bg-midnight" : "bg-white"} ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`} />
         </button>
       </nav>
 

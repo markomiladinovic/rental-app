@@ -169,8 +169,19 @@ function BookingContent() {
   if (!product) {
     return (
       <>
-        <div className="pt-28 pb-12 md:pt-36 md:pb-16 bg-snow">
-          <div className="mx-auto max-w-7xl px-5 md:px-16">
+        <div className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
+          {/* Background image with white overlay */}
+          <div className="absolute inset-0">
+            <Image
+              src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80"
+              alt=""
+              fill
+              className="object-cover"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-white/85" />
+          </div>
+          <div className="relative z-10 mx-auto max-w-7xl px-5 md:px-16">
             <p className="text-ocean text-sm font-semibold uppercase tracking-[0.15em] mb-3">
               Vodič
             </p>
@@ -182,8 +193,8 @@ function BookingContent() {
             </p>
           </div>
         </div>
-        <Section>
-          <div className="max-w-3xl mx-auto">
+        <section className="py-16 md:py-24">
+          <div className="mx-auto max-w-3xl px-5 md:px-16">
             <div className="space-y-8">
               {[
                 {
@@ -235,7 +246,7 @@ function BookingContent() {
               <Button href="/rentals" size="lg">Pogledaj opremu</Button>
             </div>
           </div>
-        </Section>
+        </section>
       </>
     );
   }
