@@ -45,6 +45,45 @@ export async function getProducts(): Promise<Product[]> {
   }));
 }
 
+export async function createProduct(product: Omit<Product, "id">): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .insert({
+      slug: product.slug,
+      name: product.name,
+      category: product.category,
+      category_label: product.categoryLabel,
+      description: product.description,
+      short_description: product.shortDescription,
+      price_per_hour: product.pricePerHour,
+      price_per_day: product.pricePerDay,
+      image: product.image,
+      gallery: product.gallery,
+      features: product.features,
+      available: product.available,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    slug: data.slug,
+    name: data.name,
+    category: data.category,
+    categoryLabel: data.category_label,
+    description: data.description,
+    shortDescription: data.short_description,
+    pricePerHour: data.price_per_hour,
+    pricePerDay: data.price_per_day,
+    image: data.image,
+    gallery: data.gallery || [],
+    features: data.features || [],
+    available: data.available,
+  };
+}
+
 export async function updateProduct(product: Product): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
