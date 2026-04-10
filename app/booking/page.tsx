@@ -1,10 +1,11 @@
 "use client";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import type { Product } from "@/data/products";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
+import Calendar from "@/components/ui/Calendar";
 
 export default function BookingPage() {
   return (
@@ -21,17 +22,42 @@ function BookingContent() {
   const quantityParam = parseInt(searchParams.get("quantity") || "1");
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
   }, []);
 
   const product = products.find((p) => p.slug === productSlug);
 
+  // Fetch booked dates when product is known
+  const fetchAvailability = useCallback(async (productId: string) => {
+    const today = new Date();
+    const future = new Date();
+    future.setMonth(future.getMonth() + 3);
+    const from = today.toISOString().split("T")[0];
+    const to = future.toISOString().split("T")[0];
+
+    const res = await fetch(`/api/reservations/availability?productId=${productId}&from=${from}&to=${to}`);
+    if (res.ok) {
+      const data = await res.json();
+      setBookedDates(new Set(data.bookedDates));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (product) fetchAvailability(product.id);
+  }, [product, fetchAvailability]);
+
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     date: "",
+    endDate: "",
     time: "",
     hours: 1,
+    days: 1,
     name: "",
     email: "",
     phone: "",
@@ -46,9 +72,57 @@ function BookingContent() {
       ? product.pricePerDay
       : product.pricePerHour
     : 0;
-  const total = price * quantityParam * (durationParam === "hour" ? form.hours : 1);
+  const total = price * quantityParam * (durationParam === "hour" ? form.hours : form.days);
 
   const [confirmed, setConfirmed] = useState(false);
+
+  // Calculate end date for daily rentals
+  const endDate = durationParam === "day" && form.date
+    ? (() => {
+        const d = new Date(form.date);
+        d.setDate(d.getDate() + form.days - 1);
+        return d.toISOString().split("T")[0];
+      })()
+    : form.date;
+
+  const handleConfirm = async () => {
+    if (!product) return;
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          productName: product.name,
+          durationType: durationParam,
+          quantity: quantityParam,
+          startDate: form.date,
+          startTime: form.time,
+          hours: durationParam === "hour" ? form.hours : null,
+          endDate: endDate,
+          customerName: form.name,
+          customerEmail: form.email,
+          customerPhone: form.phone,
+          note: form.note,
+          totalPrice: total,
+        }),
+      });
+
+      if (res.ok) {
+        setConfirmed(true);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Greška pri kreiranju rezervacije");
+      }
+    } catch {
+      setError("Greška pri slanju rezervacije");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (confirmed) {
     return (
@@ -77,7 +151,7 @@ function BookingContent() {
               <div>
                 <span className="text-muted">Trajanje:</span>
                 <p className="font-semibold text-midnight">
-                  {durationParam === "day" ? "Ceo dan" : `${form.hours} sat(a)`}
+                  {durationParam === "day" ? `${form.days} dan(a)` : `${form.hours} sat(a)`}
                 </p>
               </div>
               <div>
@@ -132,14 +206,38 @@ function BookingContent() {
           <div className="space-y-6">
             <h2 className="font-heading font-semibold text-xl text-midnight">Izaberi datum i vreme</h2>
             <div>
-              <label className={labelClass}>Datum</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => set("date", e.target.value)}
-                className={inputClass}
+              <label className={labelClass}>Datum {durationParam === "day" ? "početka" : ""}</label>
+              <Calendar
+                selectedDate={form.date}
+                onSelect={(d) => set("date", d)}
+                bookedDates={bookedDates}
               />
             </div>
+            {durationParam === "day" && (
+              <div>
+                <label className={labelClass}>Broj dana</label>
+                <div className="flex gap-3">
+                  {[1, 2, 3, 5, 7].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => set("days", d)}
+                      className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        form.days === d
+                          ? "bg-ocean text-white shadow-cta"
+                          : "bg-snow text-subtle border border-silver hover:bg-cloud"
+                      }`}
+                    >
+                      {d} {d === 1 ? "dan" : "dana"}
+                    </button>
+                  ))}
+                </div>
+                {form.date && (
+                  <p className="text-muted text-sm mt-2">
+                    Od {form.date} do {endDate}
+                  </p>
+                )}
+              </div>
+            )}
             <div>
               <label className={labelClass}>Vreme preuzimanja</label>
               <select
@@ -241,7 +339,7 @@ function BookingContent() {
             <div className="bg-snow rounded-2xl p-6 border border-cloud space-y-4">
               <div className="flex items-center gap-4 pb-4 border-b border-silver">
                 <div className="relative w-20 h-16 rounded-xl overflow-hidden">
-                  <Image src={product.image} alt="" fill sizes="80px" className="object-cover" />
+                  <Image src={product.image} alt="" fill sizes="80px" className="object-cover" unoptimized={product.image.startsWith("/uploads")} />
                 </div>
                 <div>
                   <h3 className="font-heading font-bold text-midnight">{product.name}</h3>
@@ -251,7 +349,9 @@ function BookingContent() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted">Datum:</span>
-                  <p className="font-semibold text-midnight">{form.date}</p>
+                  <p className="font-semibold text-midnight">
+                    {form.date}{durationParam === "day" && form.days > 1 ? ` — ${endDate}` : ""}
+                  </p>
                 </div>
                 <div>
                   <span className="text-muted">Vreme:</span>
@@ -260,7 +360,7 @@ function BookingContent() {
                 <div>
                   <span className="text-muted">Trajanje:</span>
                   <p className="font-semibold text-midnight">
-                    {durationParam === "day" ? "Ceo dan" : `${form.hours} sat(a)`}
+                    {durationParam === "day" ? `${form.days} dan(a)` : `${form.hours} sat(a)`}
                   </p>
                 </div>
                 <div>
@@ -287,10 +387,15 @@ function BookingContent() {
                 <span className="font-bold text-2xl text-ocean">{total.toLocaleString()} din</span>
               </div>
             </div>
+
+            {error && (
+              <p className="text-rose text-sm font-medium bg-rose/10 px-4 py-2.5 rounded-xl">{error}</p>
+            )}
+
             <div className="flex justify-between pt-4">
               <Button variant="ghost" onClick={() => setStep(2)}>Nazad</Button>
-              <Button size="lg" onClick={() => setConfirmed(true)}>
-                Potvrdi rezervaciju
+              <Button size="lg" onClick={handleConfirm} disabled={submitting}>
+                {submitting ? "Slanje..." : "Potvrdi rezervaciju"}
               </Button>
             </div>
           </div>
