@@ -22,6 +22,15 @@ export default function ProductDetailPage() {
 
   const product = products.find((p) => p.slug === slug);
 
+  // Fetch today's bookings for this product
+  useEffect(() => {
+    if (!product) return;
+    const today = new Date().toISOString().split("T")[0];
+    fetch(`/api/reservations/availability?productId=${product.id}&from=${today}&to=${today}`)
+      .then((r) => r.json())
+      .then((data) => setTodayBookings(data.reservations?.length || 0));
+  }, [product]);
+
   if (products.length === 0) {
     return (
       <Section className="pt-32">
@@ -41,15 +50,6 @@ export default function ProductDetailPage() {
       </Section>
     );
   }
-
-  // Fetch today's bookings for this product
-  useEffect(() => {
-    if (!product) return;
-    const today = new Date().toISOString().split("T")[0];
-    fetch(`/api/reservations/availability?productId=${product.id}&from=${today}&to=${today}`)
-      .then((r) => r.json())
-      .then((data) => setTodayBookings(data.reservations?.length || 0));
-  }, [product]);
 
   const price = duration === "hour" ? product.pricePerHour : product.pricePerDay;
   const total = price * quantity;
