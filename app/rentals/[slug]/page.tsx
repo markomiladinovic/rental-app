@@ -15,6 +15,7 @@ export default function ProductDetailPage() {
   const [duration, setDuration] = useState<"hour" | "day">("hour");
   const [quantity, setQuantity] = useState(1);
   const [todayBookings, setTodayBookings] = useState<number | null>(null);
+  const [nextFreeDate, setNextFreeDate] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
@@ -22,13 +23,35 @@ export default function ProductDetailPage() {
 
   const product = products.find((p) => p.slug === slug);
 
-  // Fetch today's bookings for this product
+  // Fetch availability for this product
   useEffect(() => {
     if (!product) return;
-    const today = new Date().toISOString().split("T")[0];
-    fetch(`/api/reservations/availability?productId=${product.id}&from=${today}&to=${today}`)
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    const future = new Date();
+    future.setMonth(future.getMonth() + 3);
+    const futureStr = future.toISOString().split("T")[0];
+
+    fetch(`/api/reservations/availability?productId=${product.id}&from=${todayStr}&to=${futureStr}`)
       .then((r) => r.json())
-      .then((data) => setTodayBookings(data.reservations?.length || 0));
+      .then((data) => {
+        const booked = new Set<string>(data.bookedDates || []);
+        // Count today's reservations
+        setTodayBookings(booked.has(todayStr) ? data.reservations?.length || 1 : 0);
+
+        // Find next free date if today is booked
+        if (booked.has(todayStr)) {
+          const d = new Date(today);
+          for (let i = 0; i < 90; i++) {
+            d.setDate(d.getDate() + 1);
+            const ds = d.toISOString().split("T")[0];
+            if (!booked.has(ds)) {
+              setNextFreeDate(ds);
+              return;
+            }
+          }
+        }
+      });
   }, [product]);
 
   if (products.length === 0) {
@@ -114,7 +137,12 @@ export default function ProductDetailPage() {
                     ? "bg-emerald/10 text-emerald"
                     : "bg-amber/10 text-amber"
                 }`}>
-                  {todayBookings === 0 ? "Dostupno danas" : `${todayBookings} rezervacija danas`}
+                  {todayBookings === 0
+                    ? "Dostupno danas"
+                    : nextFreeDate
+                      ? `Slobodno od ${new Date(nextFreeDate).toLocaleDateString("sr-Latn-RS", { day: "numeric", month: "long" })}`
+                      : "Zauzeto"
+                  }
                 </span>
               )}
               <h1 className="font-heading font-bold text-3xl md:text-4xl text-midnight mb-4 mt-2">
@@ -209,6 +237,11 @@ export default function ProductDetailPage() {
               {!product.available && (
                 <div className="bg-rose/10 border border-rose/20 rounded-xl p-4 text-center">
                   <p className="text-rose font-semibold text-sm">Ovaj proizvod trenutno nije dostupan</p>
+                  {nextFreeDate && (
+                    <p className="text-subtle text-sm mt-1">
+                      Slobodno od {new Date(nextFreeDate).toLocaleDateString("sr-Latn-RS", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
