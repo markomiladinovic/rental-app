@@ -16,7 +16,7 @@ export default function Hero() {
       {/* Content */}
       <div className="relative z-10 text-center text-white px-5 max-w-4xl mx-auto">
         <p className="text-sm md:text-base font-semibold uppercase tracking-[0.2em] text-white/80 mb-6">
-          Rent Outdoor Equipment
+          Iznajmi outdoor opremu
         </p>
         <h1 className="font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight mb-6">
           Tvoja avantura <br className="hidden md:block" />
