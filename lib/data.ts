@@ -310,6 +310,70 @@ export async function updateReservationStatus(
   return mapReservation(data);
 }
 
+// --- Testimonials ---
+
+export type Testimonial = {
+  id: string;
+  name: string;
+  activity: string;
+  text: string;
+  rating: number;
+  sort_order?: number;
+};
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  const { data, error } = await supabase
+    .from("testimonials")
+    .select("*")
+    .order("sort_order");
+
+  if (error || !data) return [];
+  return data;
+}
+
+export async function createTestimonial(t: Omit<Testimonial, "id">): Promise<Testimonial | null> {
+  const { data, error } = await supabase
+    .from("testimonials")
+    .insert({
+      name: t.name,
+      activity: t.activity,
+      text: t.text,
+      rating: t.rating,
+      sort_order: t.sort_order || 0,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data;
+}
+
+export async function updateTestimonial(t: Testimonial): Promise<Testimonial | null> {
+  const { data, error } = await supabase
+    .from("testimonials")
+    .update({
+      name: t.name,
+      activity: t.activity,
+      text: t.text,
+      rating: t.rating,
+    })
+    .eq("id", t.id)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data;
+}
+
+export async function deleteTestimonial(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("testimonials")
+    .delete()
+    .eq("id", id);
+
+  return !error;
+}
+
 // --- Admins ---
 
 export async function getAdminByEmail(email: string): Promise<Admin | null> {

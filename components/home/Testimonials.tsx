@@ -1,7 +1,11 @@
 import Section from "@/components/ui/Section";
-import { testimonials } from "@/data/testimonials";
+import { getTestimonials } from "@/lib/data";
 
-export default function Testimonials() {
+export default async function Testimonials() {
+  const testimonials = await getTestimonials();
+
+  if (testimonials.length === 0) return null;
+
   return (
     <Section className="bg-snow">
       <div className="text-center mb-12 md:mb-16">
@@ -33,7 +37,7 @@ export default function Testimonials() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-ocean/10 flex items-center justify-center">
                 <span className="text-ocean font-bold text-sm">
-                  {t.name.split(" ").map((w) => w[0]).join("")}
+                  {t.name.split(" ").map((w: string) => w[0]).join("")}
                 </span>
               </div>
               <div>
