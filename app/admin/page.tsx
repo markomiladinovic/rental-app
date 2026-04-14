@@ -10,6 +10,26 @@ export default async function AdminDashboard() {
   const todayStr = new Date().toISOString().split("T")[0];
   const activeReservations = reservations.filter((r) => r.status === "confirmed");
   const todayReservations = activeReservations.filter((r) => r.startDate === todayStr);
+
+  // Chart data: reservations per day for last 14 days
+  const chartDays = 14;
+  const chartData: { label: string; count: number }[] = [];
+  for (let i = chartDays - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split("T")[0];
+    const count = reservations.filter((r) => r.startDate === ds && r.status !== "cancelled").length;
+    chartData.push({
+      label: d.toLocaleDateString("sr-Latn-RS", { day: "numeric", month: "short" }),
+      count,
+    });
+  }
+  const maxCount = Math.max(...chartData.map((d) => d.count), 1);
+
+  // Revenue
+  const totalRevenue = reservations
+    .filter((r) => r.status !== "cancelled")
+    .reduce((sum, r) => sum + r.totalPrice, 0);
   const available = products.filter((p) => p.available).length;
   const unavailable = products.filter((p) => !p.available).length;
 
@@ -54,6 +74,33 @@ export default async function AdminDashboard() {
           <Link href="/admin/reservations" className="text-ocean font-bold text-lg hover:text-ocean-dark transition-colors">
             Pogledaj sve →
           </Link>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="bg-white rounded-2xl p-6 border border-cloud mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-heading font-semibold text-lg text-midnight">Rezervacije (poslednjih 14 dana)</h3>
+          <div className="text-right">
+            <p className="text-muted text-xs">Ukupan prihod</p>
+            <p className="font-heading font-bold text-xl text-ocean">{totalRevenue.toLocaleString()} din</p>
+          </div>
+        </div>
+        <div className="flex items-end gap-1.5 h-32">
+          {chartData.map((d, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <span className="text-xs text-muted font-medium">
+                {d.count > 0 ? d.count : ""}
+              </span>
+              <div
+                className="w-full rounded-t-md bg-ocean/80 hover:bg-ocean transition-colors min-h-[2px]"
+                style={{ height: `${(d.count / maxCount) * 100}%` }}
+              />
+              <span className="text-[10px] text-muted leading-tight text-center">
+                {d.label.split(" ")[0]}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
