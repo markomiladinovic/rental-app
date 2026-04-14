@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
+
+export const metadata: Metadata = {
+  title: "O nama",
+  description: "BoMa Adventures — naša priča, misija i vrednosti. Strast prema prirodi i outdoor aktivnostima.",
+};
 
 export default function AboutPage() {
   return (
