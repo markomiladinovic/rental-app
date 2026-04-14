@@ -69,13 +69,48 @@ export default function AdminReservationsPage() {
   const todayStr = new Date().toISOString().split("T")[0];
   const todayCount = reservations.filter((r) => r.startDate === todayStr && r.status === "confirmed").length;
 
+  const exportCSV = () => {
+    const header = "Datum,Vreme,Proizvod,Korisnik,Email,Telefon,Trajanje,Kolicina,Ukupno (din),Status\n";
+    const rows = filtered.map((r) =>
+      [
+        r.startDate,
+        r.startTime,
+        `"${r.productName}"`,
+        `"${r.customerName}"`,
+        r.customerEmail,
+        r.customerPhone,
+        r.durationType === "day" ? `${r.startDate} - ${r.endDate}` : `${r.hours}h`,
+        r.quantity,
+        r.totalPrice,
+        r.status,
+      ].join(",")
+    ).join("\n");
+
+    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rezervacije-${todayStr}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-heading font-bold text-xl text-midnight">Rezervacije</h2>
-        {message && (
-          <span className="text-sm font-medium text-emerald bg-emerald/10 px-3 py-1.5 rounded-lg">{message}</span>
-        )}
+        <div className="flex items-center gap-3">
+          {message && (
+            <span className="text-sm font-medium text-emerald bg-emerald/10 px-3 py-1.5 rounded-lg">{message}</span>
+          )}
+          <button
+            onClick={exportCSV}
+            disabled={filtered.length === 0}
+            className="bg-white hover:bg-cloud text-midnight border border-silver text-sm font-semibold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+          >
+            Preuzmi CSV
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
