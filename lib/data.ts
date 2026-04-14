@@ -219,6 +219,7 @@ export type Reservation = {
   totalPrice: number;
   status: "confirmed" | "cancelled" | "completed";
   createdAt: string;
+  seen: boolean;
 };
 
 function mapReservation(r: Record<string, unknown>): Reservation {
@@ -239,6 +240,7 @@ function mapReservation(r: Record<string, unknown>): Reservation {
     totalPrice: r.total_price as number,
     status: r.status as "confirmed" | "cancelled" | "completed",
     createdAt: r.created_at as string,
+    seen: r.seen as boolean,
   };
 }
 
@@ -308,6 +310,23 @@ export async function updateReservationStatus(
 
   if (error || !data) return null;
   return mapReservation(data);
+}
+
+export async function getUnseenReservationCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("reservations")
+    .select("*", { count: "exact", head: true })
+    .eq("seen", false);
+
+  if (error) return 0;
+  return count || 0;
+}
+
+export async function markReservationsSeen(): Promise<void> {
+  await supabase
+    .from("reservations")
+    .update({ seen: true })
+    .eq("seen", false);
 }
 
 // --- Testimonials ---
