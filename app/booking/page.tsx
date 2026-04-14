@@ -181,7 +181,7 @@ function BookingContent() {
               className="object-cover"
               unoptimized
             />
-            <div className="absolute inset-0 bg-white/85" />
+            <div className="absolute inset-0 bg-white/70" />
           </div>
           <div className="relative z-10 mx-auto max-w-7xl px-5 md:px-16">
             <p className="text-ocean text-sm font-semibold uppercase tracking-[0.15em] mb-3">
