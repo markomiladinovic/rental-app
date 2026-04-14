@@ -119,10 +119,10 @@ export default function ContactPage() {
               <h3 className="font-heading font-semibold text-lg text-midnight mb-4">Informacije</h3>
               <div className="space-y-4">
                 {[
-                  { icon: "📍", label: "Adresa", value: "Beograd, Srbija" },
-                  { icon: "📞", label: "Telefon", value: "+381 64 123 4567" },
+                  { icon: "📍", label: "Adresa", value: "Bulevar Nemanjića 86, 18000 Niš, Srbija" },
+                  { icon: "📞", label: "Telefon", value: "+381 63 728 2490" },
                   { icon: "✉️", label: "Email", value: "info@boma-adventures.com" },
-                  { icon: "🕐", label: "Radno vreme", value: "Pon-Ned: 08:00 - 20:00" },
+                  { icon: "🕐", label: "Radno vreme", value: "Svakog dana: 09:00 - 21:00" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-4">
                     <span className="text-xl">{item.icon}</span>
@@ -138,7 +138,7 @@ export default function ContactPage() {
             {/* Map */}
             <div className="aspect-[4/3] rounded-2xl overflow-hidden">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d90758.15441302927!2d20.3814828!3d44.8125449!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x475a7aa3d4b28ca1%3A0x76e1759df61e4805!2sBelgrade!5e0!3m2!1ssr!2srs!4v1"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2912.5!2d21.8958!3d43.3209!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4755b0c2c1b4e1a1%3A0x1!2sBulevar%20Nemanjica%2086%2C%20Nis!5e0!3m2!1ssr!2srs!4v1"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
