@@ -23,7 +23,7 @@ export default async function Footer() {
   const settings = await getSettings();
   return (
     <footer className="bg-midnight text-white">
-      <div className="mx-auto max-w-7xl px-5 md:px-16 py-16 md:py-24">
+      <div className="mx-auto max-w-7xl px-5 md:px-16 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
           {/* Brand */}
           <div>
