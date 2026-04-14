@@ -47,7 +47,7 @@ export default function ContactPage() {
         {settings.header_image_contact && (
           <div className="absolute inset-0">
             <Image src={settings.header_image_contact} alt="" fill className="object-cover" unoptimized />
-            <div className="absolute inset-0 bg-white/85" />
+            <div className="absolute inset-0 bg-white/70" />
           </div>
         )}
         {!settings.header_image_contact && <div className="absolute inset-0 bg-snow" />}

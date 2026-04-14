@@ -73,7 +73,7 @@ export default function RentalsPage() {
         {headerImage && (
           <div className="absolute inset-0">
             <Image src={headerImage} alt="" fill className="object-cover" unoptimized />
-            <div className="absolute inset-0 bg-white/85" />
+            <div className="absolute inset-0 bg-white/70" />
           </div>
         )}
         {!headerImage && <div className="absolute inset-0 bg-snow" />}
