@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import ImageUpload from "@/components/admin/ImageUpload";
+import Image from "next/image";
 
 const inputClass = "w-full bg-white border border-silver rounded-xl px-4 py-3 text-sm text-midnight focus:outline-none focus:border-ocean transition-colors";
 const labelClass = "block text-sm font-semibold text-slate-dark mb-2";
@@ -73,6 +75,35 @@ export default function AdminSettingsPage() {
               />
             </div>
           ))}
+        </div>
+
+        {/* Header images */}
+        <div className="pt-4 border-t border-cloud">
+          <h3 className="font-heading font-semibold text-midnight mb-4">Slike zaglavlja stranica</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[
+              { key: "header_image_about", label: "O nama" },
+              { key: "header_image_rentals", label: "Oprema" },
+              { key: "header_image_contact", label: "Kontakt" },
+              { key: "header_image_booking", label: "Kako rezervisati" },
+            ].map((img) => (
+              <div key={img.key}>
+                <label className={labelClass}>{img.label}</label>
+                <div className="flex items-start gap-3">
+                  {settings[img.key] && (
+                    <div className="relative w-24 h-16 rounded-xl overflow-hidden bg-cloud flex-shrink-0">
+                      <Image src={settings[img.key]} alt="" fill sizes="96px" className="object-cover" unoptimized />
+                    </div>
+                  )}
+                  <ImageUpload
+                    currentImage={settings[img.key] || ""}
+                    onImageChange={(url) => set(img.key, url)}
+                    label=""
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="flex justify-end pt-4 border-t border-cloud">

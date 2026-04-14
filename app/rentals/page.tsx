@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import Section from "@/components/ui/Section";
 import ProductCard from "@/components/ui/Card";
 import type { Product } from "@/data/products";
@@ -12,10 +13,12 @@ export default function RentalsPage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("default");
   const [nextFreeDates, setNextFreeDates] = useState<Record<string, string | null>>({});
+  const [headerImage, setHeaderImage] = useState("");
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
     fetch("/api/categories").then((r) => r.json()).then(setCategories);
+    fetch("/api/settings").then((r) => r.json()).then((s) => setHeaderImage(s.header_image_rentals || ""));
   }, []);
 
   // Fetch availability for all products
@@ -66,8 +69,15 @@ export default function RentalsPage() {
   return (
     <>
       {/* Header */}
-      <div className="pt-28 pb-12 md:pt-36 md:pb-16 bg-snow">
-        <div className="mx-auto max-w-7xl px-5 md:px-16">
+      <div className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
+        {headerImage && (
+          <div className="absolute inset-0">
+            <Image src={headerImage} alt="" fill className="object-cover" unoptimized />
+            <div className="absolute inset-0 bg-white/85" />
+          </div>
+        )}
+        {!headerImage && <div className="absolute inset-0 bg-snow" />}
+        <div className="relative z-10 mx-auto max-w-7xl px-5 md:px-16">
           <p className="text-ocean text-sm font-semibold uppercase tracking-[0.15em] mb-3">
             Naša ponuda
           </p>
