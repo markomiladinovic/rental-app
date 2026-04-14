@@ -47,7 +47,7 @@ export default function TestimonialForm() {
   }
 
   return (
-    <Section>
+    <Section className="!pt-0">
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
           <h3 className="font-heading font-bold text-2xl text-midnight mb-2">
