@@ -1,7 +1,7 @@
-import { getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from "@/lib/data";
+import { getAllTestimonials, createTestimonial, updateTestimonial, deleteTestimonial, updateTestimonialStatus } from "@/lib/data";
 
 export async function GET() {
-  const testimonials = await getTestimonials();
+  const testimonials = await getAllTestimonials();
   return Response.json(testimonials);
 }
 
@@ -18,6 +18,14 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   const body = await request.json();
+
+  // Status update
+  if (body.id && body.status && Object.keys(body).length === 2) {
+    const success = await updateTestimonialStatus(body.id, body.status);
+    if (!success) return Response.json({ error: "Greška" }, { status: 500 });
+    return Response.json({ success: true });
+  }
+
   const updated = await updateTestimonial(body);
 
   if (!updated) {
