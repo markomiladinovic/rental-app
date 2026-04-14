@@ -319,16 +319,34 @@ export type Testimonial = {
   text: string;
   rating: number;
   sort_order?: number;
+  status?: string;
 };
 
-export async function getTestimonials(): Promise<Testimonial[]> {
+export async function getTestimonials(onlyApproved = true): Promise<Testimonial[]> {
+  let query = supabase.from("testimonials").select("*").order("sort_order");
+  if (onlyApproved) query = query.eq("status", "approved");
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return data;
+}
+
+export async function getAllTestimonials(): Promise<Testimonial[]> {
   const { data, error } = await supabase
     .from("testimonials")
     .select("*")
-    .order("sort_order");
+    .order("created_at", { ascending: false });
 
   if (error || !data) return [];
   return data;
+}
+
+export async function updateTestimonialStatus(id: string, status: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("testimonials")
+    .update({ status })
+    .eq("id", id);
+  return !error;
 }
 
 export async function createTestimonial(t: Omit<Testimonial, "id">): Promise<Testimonial | null> {
@@ -340,6 +358,7 @@ export async function createTestimonial(t: Omit<Testimonial, "id">): Promise<Tes
       text: t.text,
       rating: t.rating,
       sort_order: t.sort_order || 0,
+      status: t.status || "pending",
     })
     .select()
     .single();
