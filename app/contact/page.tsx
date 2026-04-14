@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 
@@ -42,8 +43,15 @@ export default function ContactPage() {
   return (
     <>
       {/* Header */}
-      <div className="pt-28 pb-12 md:pt-36 md:pb-16 bg-snow">
-        <div className="mx-auto max-w-7xl px-5 md:px-16">
+      <div className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
+        {settings.header_image_contact && (
+          <div className="absolute inset-0">
+            <Image src={settings.header_image_contact} alt="" fill className="object-cover" unoptimized />
+            <div className="absolute inset-0 bg-white/85" />
+          </div>
+        )}
+        {!settings.header_image_contact && <div className="absolute inset-0 bg-snow" />}
+        <div className="relative z-10 mx-auto max-w-7xl px-5 md:px-16">
           <p className="text-ocean text-sm font-semibold uppercase tracking-[0.15em] mb-3">
             Kontakt
           </p>

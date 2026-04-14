@@ -2,20 +2,22 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
+import { getSettings } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "O nama",
   description: "BoMa Adventures — naša priča, misija i vrednosti. Strast prema prirodi i outdoor aktivnostima.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getSettings();
   return (
     <>
       {/* Hero */}
       <div className="relative pt-20">
         <div className="aspect-[3/1] md:aspect-[4/1] overflow-hidden">
           <Image
-            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80"
+            src={settings.header_image_about || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80"}
             alt="Mountains"
             fill
             className="object-cover"

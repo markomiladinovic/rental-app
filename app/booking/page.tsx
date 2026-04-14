@@ -25,9 +25,11 @@ function BookingContent() {
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [settings, setSettings] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
+    fetch("/api/settings").then((r) => r.json()).then(setSettings);
   }, []);
 
   const product = products.find((p) => p.slug === productSlug);
@@ -173,7 +175,7 @@ function BookingContent() {
           {/* Background image with white overlay */}
           <div className="absolute inset-0">
             <Image
-              src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80"
+              src={settings.header_image_booking || "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80"}
               alt=""
               fill
               className="object-cover"
