@@ -17,8 +17,18 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BoMa Adventures — Rent Outdoor Equipment",
-  description: "Rent SUP boards, kayaks, city bikes and MTB bikes. Premium outdoor equipment for your next adventure.",
+  title: {
+    default: "BoMa Adventures — Iznajmi outdoor opremu",
+    template: "%s | BoMa Adventures",
+  },
+  description: "Iznajmi SUP daske, kajake, gradske i MTB bicikle. Premium oprema za tvoju sledeću avanturu.",
+  keywords: ["rental", "iznajmljivanje", "SUP", "kajak", "bicikl", "MTB", "outdoor", "Beograd", "avantura"],
+  openGraph: {
+    title: "BoMa Adventures — Iznajmi outdoor opremu",
+    description: "Iznajmi SUP daske, kajake, gradske i MTB bicikle. Premium oprema za tvoju sledeću avanturu.",
+    locale: "sr_RS",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
