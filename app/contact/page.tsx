@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 
@@ -8,7 +8,12 @@ export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [settings, setSettings] = useState<Record<string, string>>({});
   const set = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  useEffect(() => {
+    fetch("/api/settings").then((r) => r.json()).then(setSettings);
+  }, []);
 
   const handleSend = async () => {
     setSending(true);
@@ -119,11 +124,11 @@ export default function ContactPage() {
               <h3 className="font-heading font-semibold text-lg text-midnight mb-4">Informacije</h3>
               <div className="space-y-4">
                 {[
-                  { icon: "📍", label: "Adresa", value: "Bulevar Nemanjića 86, 18000 Niš, Srbija" },
-                  { icon: "📞", label: "Telefon", value: "+381 63 728 2490" },
-                  { icon: "✉️", label: "Email", value: "info@boma-adventures.com" },
-                  { icon: "🕐", label: "Radno vreme", value: "Svakog dana: 09:00 - 21:00" },
-                ].map((item) => (
+                  { icon: "📍", label: "Adresa", value: settings.address || "" },
+                  { icon: "📞", label: "Telefon", value: [settings.phone, settings.phone2].filter(Boolean).join(" / ") || "" },
+                  { icon: "✉️", label: "Email", value: [settings.email, settings.email2].filter(Boolean).join(" / ") || "" },
+                  { icon: "🕐", label: "Radno vreme", value: settings.working_hours || "" },
+                ].filter((item) => item.value).map((item) => (
                   <div key={item.label} className="flex items-start gap-4">
                     <span className="text-xl">{item.icon}</span>
                     <div>

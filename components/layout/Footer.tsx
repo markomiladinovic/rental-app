@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSettings } from "@/lib/data";
 
 const FOOTER_LINKS = {
   "Oprema": [
@@ -18,7 +19,8 @@ const FOOTER_LINKS = {
   ],
 };
 
-export default function Footer() {
+export default async function Footer() {
+  const settings = await getSettings();
   return (
     <footer className="bg-midnight text-white">
       <div className="mx-auto max-w-7xl px-5 md:px-16 py-16 md:py-24">
@@ -66,8 +68,12 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} BoMa Adventures. Sva prava zadržana.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="text-muted hover:text-white text-sm transition-colors">Instagram</a>
-            <a href="#" className="text-muted hover:text-white text-sm transition-colors">Facebook</a>
+            {settings.instagram && (
+              <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-white text-sm transition-colors">Instagram</a>
+            )}
+            {settings.facebook && (
+              <a href={settings.facebook} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-white text-sm transition-colors">Facebook</a>
+            )}
           </div>
         </div>
       </div>

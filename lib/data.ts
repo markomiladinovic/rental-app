@@ -374,6 +374,33 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
   return !error;
 }
 
+// --- Settings ---
+
+export async function getSettings(): Promise<Record<string, string>> {
+  const { data, error } = await supabase
+    .from("settings")
+    .select("*");
+
+  if (error || !data) return {};
+
+  const settings: Record<string, string> = {};
+  for (const row of data) {
+    settings[row.key] = row.value;
+  }
+  return settings;
+}
+
+export async function updateSettings(settings: Record<string, string>): Promise<boolean> {
+  const entries = Object.entries(settings);
+  for (const [key, value] of entries) {
+    const { error } = await supabase
+      .from("settings")
+      .upsert({ key, value }, { onConflict: "key" });
+    if (error) return false;
+  }
+  return true;
+}
+
 // --- Admins ---
 
 export async function getAdminByEmail(email: string): Promise<Admin | null> {
