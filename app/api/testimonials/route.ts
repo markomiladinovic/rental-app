@@ -1,4 +1,5 @@
 import { getAllTestimonials, createTestimonial, updateTestimonial, deleteTestimonial, updateTestimonialStatus } from "@/lib/data";
+import { sendTestimonialPendingEmail } from "@/lib/email";
 
 export async function GET() {
   const testimonials = await getAllTestimonials();
@@ -11,6 +12,16 @@ export async function POST(request: Request) {
 
   if (!testimonial) {
     return Response.json({ error: "Greška pri kreiranju" }, { status: 500 });
+  }
+
+  // Notify admins only for pending submissions from users
+  if (testimonial.status === "pending") {
+    sendTestimonialPendingEmail({
+      name: testimonial.name,
+      activity: testimonial.activity,
+      rating: testimonial.rating,
+      text: testimonial.text,
+    }).catch(() => {});
   }
 
   return Response.json(testimonial, { status: 201 });

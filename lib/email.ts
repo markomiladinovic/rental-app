@@ -96,6 +96,87 @@ export async function sendReservationEmail(data: {
   });
 }
 
+export async function sendCancellationEmail(reservation: Reservation) {
+  if (!reservation.customerEmail) return;
+
+  const duration = reservation.durationType === "day"
+    ? `${reservation.startDate} — ${reservation.endDate}`
+    : `${reservation.startDate}, ${reservation.startTime} (${reservation.hours}h)`;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [reservation.customerEmail],
+    subject: `Rezervacija otkazana — ${reservation.productName}`,
+    html: `
+      <h2>Tvoja rezervacija je otkazana</h2>
+      <p>Pozdrav ${reservation.customerName},</p>
+      <p>Obaveštavamo te da je rezervacija za <strong>${reservation.productName}</strong> otkazana.</p>
+      <table style="border-collapse:collapse;width:100%;max-width:500px;margin-top:16px;">
+        <tr><td style="padding:8px 0;color:#64748b;">Termin:</td><td style="padding:8px 0;font-weight:600;">${duration}</td></tr>
+        <tr><td style="padding:8px 0;color:#64748b;">Količina:</td><td style="padding:8px 0;font-weight:600;">${reservation.quantity}</td></tr>
+      </table>
+      <div style="margin-top:24px;padding:16px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca;">
+        <p style="margin:0;color:#1e293b;">Ako imaš pitanja o razlogu otkazivanja ili želiš da napraviš novu rezervaciju, slobodno nas kontaktiraj.</p>
+      </div>
+      <p style="margin-top:24px;color:#94a3b8;font-size:12px;">BoMa Adventures</p>
+    `,
+  });
+}
+
+export async function sendCompletionEmail(reservation: Reservation) {
+  if (!reservation.customerEmail) return;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [reservation.customerEmail],
+    subject: `Hvala na poverenju — ${reservation.productName}`,
+    html: `
+      <h2>Hvala ti!</h2>
+      <p>Pozdrav ${reservation.customerName},</p>
+      <p>Hvala ti što si koristio našu opremu (<strong>${reservation.productName}</strong>). Nadamo se da si uživao!</p>
+      <div style="margin-top:24px;padding:16px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;">
+        <p style="margin:0 0 8px 0;color:#1e293b;font-weight:600;">💬 Podeli iskustvo</p>
+        <p style="margin:0;color:#1e293b;">Tvoj utisak nam puno znači. Ako možeš da odvojiš minut, ostavi kratak komentar na našem sajtu.</p>
+      </div>
+      <p style="margin-top:24px;color:#1e293b;">Vidimo se opet!</p>
+      <p style="margin-top:24px;color:#94a3b8;font-size:12px;">BoMa Adventures</p>
+    `,
+  });
+}
+
+export async function sendTestimonialPendingEmail(data: {
+  name: string;
+  activity: string;
+  rating: number;
+  text: string;
+}) {
+  if (ADMIN_EMAILS.length === 0) return;
+
+  const stars = "★".repeat(data.rating) + "☆".repeat(5 - data.rating);
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: ADMIN_EMAILS,
+    subject: `Novi utisak čeka odobrenje — ${data.name}`,
+    html: `
+      <h2>Novi utisak korisnika</h2>
+      <p>Korisnik je ostavio utisak koji čeka tvoje odobrenje.</p>
+      <table style="border-collapse:collapse;width:100%;max-width:500px;margin-top:16px;">
+        <tr><td style="padding:8px 0;color:#64748b;">Ime:</td><td style="padding:8px 0;font-weight:600;">${data.name}</td></tr>
+        <tr><td style="padding:8px 0;color:#64748b;">Aktivnost:</td><td style="padding:8px 0;font-weight:600;">${data.activity}</td></tr>
+        <tr><td style="padding:8px 0;color:#64748b;">Ocena:</td><td style="padding:8px 0;color:#d97706;font-size:16px;">${stars}</td></tr>
+      </table>
+      <div style="margin-top:16px;padding:16px;background:#f8fafc;border-radius:12px;">
+        <p style="margin:0;color:#1e293b;font-style:italic;">&ldquo;${data.text.replace(/\n/g, "<br>")}&rdquo;</p>
+      </div>
+      <p style="margin-top:24px;color:#1e293b;">
+        Odobri ili odbij utisak u <a href="https://boma-adventures.com/admin/testimonials" style="color:#2563eb;">admin panelu</a>.
+      </p>
+      <p style="margin-top:24px;color:#94a3b8;font-size:12px;">BoMa Adventures</p>
+    `,
+  });
+}
+
 export async function sendReminderEmail(reservations: Reservation[]) {
   if (reservations.length === 0) return;
 
