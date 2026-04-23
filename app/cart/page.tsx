@@ -7,13 +7,11 @@ import Button from "@/components/ui/Button";
 import { getCart, updateCartQuantity, removeFromCart, type CartItem } from "@/lib/cart";
 
 export default function CartPage() {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [items, setItems] = useState<CartItem[] | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    setItems(getCart());
     const sync = () => setItems(getCart());
+    sync();
     window.addEventListener("cart-changed", sync);
     return () => window.removeEventListener("cart-changed", sync);
   }, []);
@@ -31,16 +29,16 @@ export default function CartPage() {
   const itemTotal = (item: CartItem) =>
     (item.durationType === "hour" ? item.pricePerHour : item.pricePerDay) * item.quantity;
 
-  // Total for cart is calculated per hour; booking page multiplies by hours/days
-  const subtotal = items.reduce((sum, it) => sum + itemTotal(it), 0);
-
-  if (!mounted) {
+  if (items === null) {
     return (
       <Section className="pt-32">
         <div className="text-center py-20 text-muted">Učitavanje...</div>
       </Section>
     );
   }
+
+  // Total for cart is calculated per hour; booking page multiplies by hours/days
+  const subtotal = items.reduce((sum, it) => sum + itemTotal(it), 0);
 
   return (
     <>
