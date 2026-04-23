@@ -21,7 +21,7 @@ export default async function Testimonials() {
         {testimonials.map((t) => (
           <div
             key={t.id}
-            className="bg-white rounded-2xl p-6 border border-cloud"
+            className="bg-white rounded-2xl p-6 border-2 border-silver"
           >
             {/* Stars */}
             <div className="flex gap-1 mb-4">
