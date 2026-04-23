@@ -412,6 +412,65 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
   return !error;
 }
 
+// --- FAQ ---
+
+export type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+  sort_order?: number;
+};
+
+export async function getFaq(): Promise<FaqItem[]> {
+  const { data, error } = await supabase
+    .from("faq")
+    .select("*")
+    .order("sort_order");
+
+  if (error || !data) return [];
+  return data;
+}
+
+export async function createFaq(item: Omit<FaqItem, "id">): Promise<FaqItem | null> {
+  const { data, error } = await supabase
+    .from("faq")
+    .insert({
+      question: item.question,
+      answer: item.answer,
+      sort_order: item.sort_order || 0,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data;
+}
+
+export async function updateFaq(item: FaqItem): Promise<FaqItem | null> {
+  const { data, error } = await supabase
+    .from("faq")
+    .update({
+      question: item.question,
+      answer: item.answer,
+      sort_order: item.sort_order,
+    })
+    .eq("id", item.id)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data;
+}
+
+export async function deleteFaq(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("faq")
+    .delete()
+    .eq("id", id);
+
+  return !error;
+}
+
 // --- Settings ---
 
 export async function getSettings(): Promise<Record<string, string>> {

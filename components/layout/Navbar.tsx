@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/", label: "Početna" },
   { href: "/rentals", label: "Oprema" },
   { href: "/about", label: "O nama" },
+  { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Kontakt" },
 ];
 

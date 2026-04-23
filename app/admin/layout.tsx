@@ -10,6 +10,7 @@ const ADMIN_NAV = [
   { href: "/admin/gallery", label: "Galerija", icon: "🖼️" },
   { href: "/admin/reservations", label: "Rezervacije", icon: "📅", badge: true },
   { href: "/admin/testimonials", label: "Utisci", icon: "💬" },
+  { href: "/admin/faq", label: "FAQ", icon: "❓" },
   { href: "/admin/settings", label: "Informacije", icon: "⚙️" },
 ];
 
