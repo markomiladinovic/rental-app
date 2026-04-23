@@ -220,6 +220,7 @@ export type Reservation = {
   status: "confirmed" | "cancelled" | "completed";
   createdAt: string;
   seen: boolean;
+  bookingGroupId?: string | null;
 };
 
 function mapReservation(r: Record<string, unknown>): Reservation {
@@ -241,10 +242,11 @@ function mapReservation(r: Record<string, unknown>): Reservation {
     status: r.status as "confirmed" | "cancelled" | "completed",
     createdAt: r.created_at as string,
     seen: r.seen as boolean,
+    bookingGroupId: (r.booking_group_id as string) || null,
   };
 }
 
-export async function createReservation(data: Omit<Reservation, "id" | "status" | "createdAt">): Promise<Reservation | null> {
+export async function createReservation(data: Omit<Reservation, "id" | "status" | "createdAt" | "seen">): Promise<Reservation | null> {
   const { data: row, error } = await supabase
     .from("reservations")
     .insert({
@@ -261,12 +263,44 @@ export async function createReservation(data: Omit<Reservation, "id" | "status" 
       customer_phone: data.customerPhone,
       note: data.note,
       total_price: data.totalPrice,
+      booking_group_id: data.bookingGroupId || null,
     })
     .select()
     .single();
 
   if (error || !row) return null;
   return mapReservation(row);
+}
+
+export async function createReservationGroup(
+  items: Omit<Reservation, "id" | "status" | "createdAt" | "seen" | "bookingGroupId">[]
+): Promise<Reservation[] | null> {
+  if (items.length === 0) return [];
+  const groupId = crypto.randomUUID();
+  const { data, error } = await supabase
+    .from("reservations")
+    .insert(
+      items.map((it) => ({
+        product_id: it.productId,
+        product_name: it.productName,
+        duration_type: it.durationType,
+        quantity: it.quantity,
+        start_date: it.startDate,
+        start_time: it.startTime,
+        hours: it.hours,
+        end_date: it.endDate,
+        customer_name: it.customerName,
+        customer_email: it.customerEmail,
+        customer_phone: it.customerPhone,
+        note: it.note,
+        total_price: it.totalPrice,
+        booking_group_id: groupId,
+      }))
+    )
+    .select();
+
+  if (error || !data) return null;
+  return data.map(mapReservation);
 }
 
 export async function getReservationsForProduct(

@@ -1,5 +1,5 @@
-import { getAllReservations, createReservation } from "@/lib/data";
-import { sendReservationEmail } from "@/lib/email";
+import { getAllReservations, createReservation, createReservationGroup } from "@/lib/data";
+import { sendReservationEmail, sendGroupReservationEmail } from "@/lib/email";
 
 export async function GET() {
   const reservations = await getAllReservations();
@@ -8,13 +8,26 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
+
+  // Batch (cart) reservation
+  if (Array.isArray(body.items) && body.items.length > 0) {
+    const reservations = await createReservationGroup(body.items);
+    if (!reservations) {
+      return Response.json({ error: "Greška pri kreiranju rezervacije" }, { status: 500 });
+    }
+
+    sendGroupReservationEmail(reservations).catch(() => {});
+
+    return Response.json(reservations, { status: 201 });
+  }
+
+  // Single reservation (backward compatible)
   const reservation = await createReservation(body);
 
   if (!reservation) {
     return Response.json({ error: "Greška pri kreiranju rezervacije" }, { status: 500 });
   }
 
-  // Send email notifications (don't block the response)
   sendReservationEmail({
     productName: reservation.productName,
     customerName: reservation.customerName,
