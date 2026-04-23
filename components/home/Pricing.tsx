@@ -27,7 +27,7 @@ export default async function Pricing() {
           return (
             <div
               key={cat.id}
-              className="bg-white border border-cloud rounded-2xl p-6 text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+              className="bg-white border-2 border-silver rounded-2xl p-6 text-center hover:border-ocean hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
             >
               <div className="text-4xl mb-4">{cat.icon}</div>
               <h3 className="font-heading font-bold text-lg text-midnight mb-1">
