@@ -68,8 +68,6 @@ export default function AdminReservationsPage() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [updating, setUpdating] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkProcessing, setBulkProcessing] = useState(false);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -102,77 +100,7 @@ export default function AdminReservationsPage() {
     }
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const clearSelection = () => setSelectedIds(new Set());
-
-  const bulkUpdate = async (status: "cancelled" | "completed") => {
-    const ids = Array.from(selectedIds);
-    const targets = reservations.filter((r) => ids.includes(r.id) && r.status === "confirmed");
-    if (targets.length === 0) {
-      setMessage("Nema aktivnih rezervacija za izmenu");
-      setTimeout(() => setMessage(""), 2000);
-      return;
-    }
-
-    const confirmMsg = status === "cancelled"
-      ? `Otkazati ${targets.length} rezervacija?`
-      : `Završiti ${targets.length} rezervacija?`;
-    if (!confirm(confirmMsg)) return;
-
-    setBulkProcessing(true);
-    setMessage("");
-    try {
-      const results = await Promise.all(
-        targets.map((t) =>
-          fetch(`/api/reservations/${t.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status }),
-          }).then((res) => (res.ok ? res.json() : null))
-        )
-      );
-      const successMap = new Map<string, Reservation>();
-      for (const r of results) {
-        if (r) successMap.set(r.id, r);
-      }
-      setReservations((prev) => prev.map((r) => successMap.get(r.id) || r));
-      setMessage(status === "cancelled"
-        ? `Otkazano: ${successMap.size}`
-        : `Završeno: ${successMap.size}`);
-      setTimeout(() => setMessage(""), 2500);
-      clearSelection();
-    } catch {
-      setMessage("Greška pri masovnoj izmeni");
-    } finally {
-      setBulkProcessing(false);
-    }
-  };
-
   const filtered = filter === "all" ? reservations : reservations.filter((r) => r.status === filter);
-  const selectableFiltered = filtered.filter((r) => r.status === "confirmed");
-  const allSelectableSelected = selectableFiltered.length > 0 && selectableFiltered.every((r) => selectedIds.has(r.id));
-  const toggleSelectAll = () => {
-    if (allSelectableSelected) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        for (const r of selectableFiltered) next.delete(r.id);
-        return next;
-      });
-    } else {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        for (const r of selectableFiltered) next.add(r.id);
-        return next;
-      });
-    }
-  };
   const confirmedCount = reservations.filter((r) => r.status === "confirmed").length;
   const todayStr = new Date().toISOString().split("T")[0];
   const todayCount = reservations.filter((r) => r.startDate === todayStr && r.status === "confirmed").length;
@@ -304,51 +232,6 @@ export default function AdminReservationsPage() {
             ))}
           </div>
 
-          {/* Bulk action bar */}
-          {selectedIds.size > 0 && (
-            <div className="bg-ocean text-white rounded-2xl p-4 mb-4 flex items-center justify-between gap-4 flex-wrap">
-              <span className="font-semibold text-sm">
-                {selectedIds.size} {selectedIds.size === 1 ? "rezervacija izabrana" : "rezervacija izabrano"}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => bulkUpdate("completed")}
-                  disabled={bulkProcessing}
-                  className="bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  Završi označene
-                </button>
-                <button
-                  onClick={() => bulkUpdate("cancelled")}
-                  disabled={bulkProcessing}
-                  className="bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  Otkaži označene
-                </button>
-                <button
-                  onClick={clearSelection}
-                  disabled={bulkProcessing}
-                  className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer"
-                >
-                  Poništi izbor
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Select all */}
-          {selectableFiltered.length > 0 && (
-            <label className="flex items-center gap-2 mb-3 px-2 cursor-pointer text-sm text-subtle hover:text-midnight">
-              <input
-                type="checkbox"
-                checked={allSelectableSelected}
-                onChange={toggleSelectAll}
-                className="w-4 h-4 rounded cursor-pointer accent-ocean"
-              />
-              <span>Označi sve aktivne ({selectableFiltered.length})</span>
-            </label>
-          )}
-
           {/* List */}
           <div className="space-y-3">
             {filtered.length === 0 ? (
@@ -357,16 +240,7 @@ export default function AdminReservationsPage() {
                 <p>Nema rezervacija.</p>
               </div>
             ) : (
-              filtered.map((r) => (
-                <ReservationCard
-                  key={r.id}
-                  r={r}
-                  updating={updating}
-                  updateStatus={updateStatus}
-                  selected={selectedIds.has(r.id)}
-                  onToggleSelect={toggleSelect}
-                />
-              ))
+              filtered.map((r) => <ReservationCard key={r.id} r={r} updating={updating} updateStatus={updateStatus} />)
             )}
           </div>
         </>
@@ -492,29 +366,14 @@ function ReservationCard({
   r,
   updating,
   updateStatus,
-  selected,
-  onToggleSelect,
 }: {
   r: Reservation;
   updating: string | null;
   updateStatus: (id: string, status: "cancelled" | "completed") => void;
-  selected: boolean;
-  onToggleSelect: (id: string) => void;
 }) {
-  const canSelect = r.status === "confirmed";
   return (
-    <div className={`bg-white rounded-2xl border p-5 transition-colors ${
-      selected ? "border-ocean bg-ocean/5" : "border-cloud"
-    }`}>
+    <div className="bg-white rounded-2xl border border-cloud p-5">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
-        {canSelect && (
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={() => onToggleSelect(r.id)}
-            className="w-5 h-5 rounded cursor-pointer accent-ocean flex-shrink-0 self-start md:self-center"
-          />
-        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="font-heading font-bold text-midnight">{r.productName}</h3>
