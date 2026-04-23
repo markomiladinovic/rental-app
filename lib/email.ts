@@ -96,6 +96,71 @@ export async function sendReservationEmail(data: {
   });
 }
 
+export async function sendReminderEmail(reservations: Reservation[]) {
+  if (reservations.length === 0) return;
+
+  const first = reservations[0];
+  const totalSum = reservations.reduce((sum, r) => sum + r.totalPrice, 0);
+  const duration = first.durationType === "day"
+    ? `${first.startDate} — ${first.endDate}`
+    : `${first.startDate}, ${first.startTime} (${first.hours}h)`;
+
+  const itemsHtml = reservations
+    .map(
+      (r) => `
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;">${r.productName}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;text-align:center;">${r.quantity}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">${r.totalPrice.toLocaleString()} din</td>
+        </tr>`
+    )
+    .join("");
+
+  const productLabel = reservations.length === 1
+    ? first.productName
+    : `${reservations.length} proizvoda`;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [first.customerEmail],
+    subject: `Podsetnik: Sutra je tvoja rezervacija — ${productLabel}`,
+    html: `
+      <h2>Podsetnik za sutrašnju rezervaciju</h2>
+      <p>Pozdrav ${first.customerName},</p>
+      <p>Samo da te podsetimo — sutra je tvoja rezervacija za <strong>${productLabel}</strong>.</p>
+      <table style="border-collapse:collapse;width:100%;max-width:500px;margin-top:16px;margin-bottom:16px;">
+        <tr><td style="padding:8px 0;color:#64748b;">Termin:</td><td style="padding:8px 0;font-weight:600;">${duration}</td></tr>
+      </table>
+      <table style="border-collapse:collapse;width:100%;max-width:500px;">
+        <thead>
+          <tr style="border-bottom:2px solid #1e293b;">
+            <th style="padding:8px 0;text-align:left;">Proizvod</th>
+            <th style="padding:8px 0;text-align:center;">Kol.</th>
+            <th style="padding:8px 0;text-align:right;">Ukupno</th>
+          </tr>
+        </thead>
+        <tbody>${itemsHtml}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding:12px 0;font-weight:700;">Ukupno:</td>
+            <td style="padding:12px 0;font-weight:700;text-align:right;color:#2563eb;">${totalSum.toLocaleString()} din</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:12px;">
+        <p style="margin:0 0 8px 0;color:#1e293b;font-weight:600;">📍 Podsetnik:</p>
+        <ul style="margin:0;padding-left:20px;color:#1e293b;">
+          <li>Ponesi lični dokument radi identifikacije</li>
+          <li>Plaćanje je na licu mesta (gotovina ili kartica)</li>
+          <li>U slučaju otkazivanja, javi se blagovremeno</li>
+        </ul>
+      </div>
+      <p style="margin-top:24px;color:#1e293b;">Vidimo se sutra!</p>
+      <p style="margin-top:24px;color:#94a3b8;font-size:12px;">BoMa Adventures</p>
+    `,
+  });
+}
+
 export async function sendGroupReservationEmail(reservations: Reservation[]) {
   if (ADMIN_EMAILS.length === 0 || reservations.length === 0) return;
 
