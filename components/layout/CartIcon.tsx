@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { getCart, cartCount, type CartItem } from "@/lib/cart";
+import { getCart, cartCount, removeFromCart, type CartItem } from "@/lib/cart";
 
 export default function CartIcon({ dark }: { dark: boolean }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -81,6 +81,17 @@ export default function CartIcon({ dark }: { dark: boolean }) {
                         {it.quantity} × {unit.toLocaleString()} din/{it.durationType === "hour" ? "sat" : "dan"}
                       </p>
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        removeFromCart(it.productId, it.durationType);
+                      }}
+                      aria-label="Ukloni iz korpe"
+                      className="flex-shrink-0 w-7 h-7 rounded-lg text-muted hover:text-rose hover:bg-rose/10 flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      ×
+                    </button>
                   </div>
                 );
               })}
