@@ -1,11 +1,12 @@
 "use client";
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import type { Product } from "@/data/products";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 import Calendar from "@/components/ui/Calendar";
+import { getCart, clearCart, type CartItem } from "@/lib/cart";
 
 export default function BookingPage() {
   return (
@@ -18,45 +19,81 @@ export default function BookingPage() {
 function BookingContent() {
   const searchParams = useSearchParams();
   const productSlug = searchParams.get("product");
-  const durationParam = searchParams.get("duration") || "hour";
+  const durationParam = (searchParams.get("duration") || "hour") as "hour" | "day";
   const quantityParam = parseInt(searchParams.get("quantity") || "1");
+  const isCartMode = searchParams.get("cart") === "1";
 
   const [products, setProducts] = useState<Product[]>([]);
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
     fetch("/api/settings").then((r) => r.json()).then(setSettings);
-  }, []);
+    if (isCartMode) {
+      setCartItems(getCart());
+    }
+    setCartLoaded(true);
+  }, [isCartMode]);
 
   const product = products.find((p) => p.slug === productSlug);
 
-  // Fetch booked dates when product is known
-  const fetchAvailability = useCallback(async (productId: string) => {
+  // Determine effective duration and items for booking
+  const effectiveItems: CartItem[] = useMemo(() => {
+    if (isCartMode) return cartItems;
+    if (product) {
+      return [
+        {
+          productId: product.id,
+          slug: product.slug,
+          name: product.name,
+          image: product.image,
+          pricePerHour: product.pricePerHour,
+          pricePerDay: product.pricePerDay,
+          durationType: durationParam,
+          quantity: quantityParam,
+        },
+      ];
+    }
+    return [];
+  }, [isCartMode, cartItems, product, durationParam, quantityParam]);
+
+  // Use duration from first item for shared booking params
+  const effectiveDuration: "hour" | "day" = effectiveItems[0]?.durationType || "hour";
+
+  // Fetch availability for all items (intersection of booked dates)
+  const fetchAvailability = useCallback(async (items: CartItem[]) => {
+    if (items.length === 0) return;
     const today = new Date();
     const future = new Date();
     future.setMonth(future.getMonth() + 3);
     const from = today.toISOString().split("T")[0];
     const to = future.toISOString().split("T")[0];
 
-    const res = await fetch(`/api/reservations/availability?productId=${productId}&from=${from}&to=${to}`);
-    if (res.ok) {
-      const data = await res.json();
-      setBookedDates(new Set(data.bookedDates));
-    }
+    const allBooked = new Set<string>();
+    await Promise.all(
+      items.map(async (it) => {
+        const res = await fetch(`/api/reservations/availability?productId=${it.productId}&from=${from}&to=${to}`);
+        if (res.ok) {
+          const data = await res.json();
+          for (const d of data.bookedDates || []) allBooked.add(d);
+        }
+      })
+    );
+    setBookedDates(allBooked);
   }, []);
 
   useEffect(() => {
-    if (product) fetchAvailability(product.id);
-  }, [product, fetchAvailability]);
+    if (effectiveItems.length > 0) fetchAvailability(effectiveItems);
+  }, [effectiveItems, fetchAvailability]);
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     date: "",
-    endDate: "",
     time: "",
     hours: 1,
     days: 1,
@@ -69,17 +106,9 @@ function BookingContent() {
   const set = (key: string, value: string | number) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const price = product
-    ? durationParam === "day"
-      ? product.pricePerDay
-      : product.pricePerHour
-    : 0;
-  const total = price * quantityParam * (durationParam === "hour" ? form.hours : form.days);
-
   const [confirmed, setConfirmed] = useState(false);
 
-  // Calculate end date for daily rentals
-  const endDate = durationParam === "day" && form.date
+  const endDate = effectiveDuration === "day" && form.date
     ? (() => {
         const d = new Date(form.date);
         d.setDate(d.getDate() + form.days - 1);
@@ -87,33 +116,51 @@ function BookingContent() {
       })()
     : form.date;
 
+  // Calculate total across all items
+  const itemsWithPrices = effectiveItems.map((it) => {
+    const unit = it.durationType === "day" ? it.pricePerDay : it.pricePerHour;
+    const multiplier = it.durationType === "hour" ? form.hours : form.days;
+    const subtotal = unit * it.quantity * multiplier;
+    return { ...it, subtotal };
+  });
+  const total = itemsWithPrices.reduce((sum, it) => sum + it.subtotal, 0);
+
   const handleConfirm = async () => {
-    if (!product) return;
+    if (effectiveItems.length === 0) return;
     setSubmitting(true);
     setError("");
 
     try {
+      const body = {
+        items: effectiveItems.map((it) => {
+          const unit = it.durationType === "day" ? it.pricePerDay : it.pricePerHour;
+          const multiplier = it.durationType === "hour" ? form.hours : form.days;
+          return {
+            productId: it.productId,
+            productName: it.name,
+            durationType: it.durationType,
+            quantity: it.quantity,
+            startDate: form.date,
+            startTime: form.time,
+            hours: it.durationType === "hour" ? form.hours : null,
+            endDate: endDate,
+            customerName: form.name,
+            customerEmail: form.email,
+            customerPhone: form.phone,
+            note: form.note,
+            totalPrice: unit * it.quantity * multiplier,
+          };
+        }),
+      };
+
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id,
-          productName: product.name,
-          durationType: durationParam,
-          quantity: quantityParam,
-          startDate: form.date,
-          startTime: form.time,
-          hours: durationParam === "hour" ? form.hours : null,
-          endDate: endDate,
-          customerName: form.name,
-          customerEmail: form.email,
-          customerPhone: form.phone,
-          note: form.note,
-          totalPrice: total,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
+        if (isCartMode) clearCart();
         setConfirmed(true);
       } else {
         const data = await res.json();
@@ -135,7 +182,11 @@ function BookingContent() {
             Rezervacija potvrđena!
           </h1>
           <p className="text-subtle text-lg mb-2">
-            Hvala, {form.name}! Tvoja rezervacija za <strong>{product?.name}</strong> je primljena.
+            Hvala, {form.name}!{" "}
+            {effectiveItems.length === 1
+              ? <>Tvoja rezervacija za <strong>{effectiveItems[0].name}</strong> je primljena.</>
+              : <>Tvoja rezervacija za <strong>{effectiveItems.length} proizvoda</strong> je primljena.</>
+            }
           </p>
           <p className="text-muted text-sm mb-8">
             Potvrda je poslata na {form.email}
@@ -153,7 +204,7 @@ function BookingContent() {
               <div>
                 <span className="text-muted">Trajanje:</span>
                 <p className="font-semibold text-midnight">
-                  {durationParam === "day" ? `${form.days} dan(a)` : `${form.hours} sat(a)`}
+                  {effectiveDuration === "day" ? `${form.days} dan(a)` : `${form.hours} sat(a)`}
                 </p>
               </div>
               <div>
@@ -168,11 +219,11 @@ function BookingContent() {
     );
   }
 
-  if (!product) {
+  // Guide page when no product and no cart
+  if (cartLoaded && effectiveItems.length === 0) {
     return (
       <>
         <div className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
-          {/* Background image with white overlay */}
           <div className="absolute inset-0">
             <Image
               src={settings.header_image_booking || "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80"}
@@ -199,36 +250,11 @@ function BookingContent() {
           <div className="mx-auto max-w-3xl px-5 md:px-16">
             <div className="space-y-8">
               {[
-                {
-                  step: "01",
-                  icon: "🔍",
-                  title: "Izaberi opremu",
-                  desc: "Idi na stranicu Oprema, pregledaj ponudu SUP dasaka, kajaka, gradskih i MTB bicikala. Klikni na proizvod koji te zanima da vidiš detalje i cenu.",
-                },
-                {
-                  step: "02",
-                  icon: "⏱️",
-                  title: "Odaberi trajanje i količinu",
-                  desc: "Na stranici proizvoda izaberi da li želiš da iznajmiš po satu ili po danu, podesi količinu i klikni dugme Rezerviši.",
-                },
-                {
-                  step: "03",
-                  icon: "📅",
-                  title: "Izaberi datum i vreme",
-                  desc: "Na kalendaru izaberi slobodan datum (zauzeti su označeni crvenom). Izaberi vreme preuzimanja i trajanje.",
-                },
-                {
-                  step: "04",
-                  icon: "📝",
-                  title: "Unesi svoje podatke",
-                  desc: "Ostavi ime, email i broj telefona kako bismo te kontaktirali za potvrdu. Možeš dodati i napomenu sa posebnim zahtevima.",
-                },
-                {
-                  step: "05",
-                  icon: "✅",
-                  title: "Potvrdi rezervaciju",
-                  desc: "Pregledaj sve detalje i potvrdi. Plaćanje je na licu mesta pri preuzimanju opreme — bez unapred plaćanja online.",
-                },
+                { step: "01", icon: "🔍", title: "Izaberi opremu", desc: "Idi na stranicu Oprema, pregledaj ponudu SUP dasaka, kajaka, gradskih i MTB bicikala. Klikni na proizvod koji te zanima da vidiš detalje i cenu." },
+                { step: "02", icon: "🛒", title: "Dodaj u korpu", desc: "Na stranici proizvoda izaberi način iznajmljivanja (sat/dan) i količinu, pa dodaj u korpu. Možeš dodati više proizvoda odjednom." },
+                { step: "03", icon: "📅", title: "Izaberi datum i vreme", desc: "Na kalendaru izaberi slobodan datum (zauzeti su označeni crvenom). Izaberi vreme preuzimanja i trajanje." },
+                { step: "04", icon: "📝", title: "Unesi svoje podatke", desc: "Ostavi ime, email i broj telefona kako bismo te kontaktirali za potvrdu. Možeš dodati i napomenu sa posebnim zahtevima." },
+                { step: "05", icon: "✅", title: "Potvrdi rezervaciju", desc: "Pregledaj sve detalje i potvrdi. Plaćanje je na licu mesta pri preuzimanju opreme — bez unapred plaćanja online." },
               ].map((item) => (
                 <div key={item.step} className="flex gap-5">
                   <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-ocean/10 flex items-center justify-center text-2xl">
@@ -253,8 +279,24 @@ function BookingContent() {
     );
   }
 
+  // Loading state
+  if (!cartLoaded || effectiveItems.length === 0) {
+    return (
+      <Section className="pt-32">
+        <div className="text-center py-20 text-muted">Učitavanje...</div>
+      </Section>
+    );
+  }
+
+  // Warn if cart has mixed duration types
+  const mixedDurations = isCartMode && new Set(cartItems.map((it) => it.durationType)).size > 1;
+
   const inputClass = "w-full bg-snow border border-silver rounded-xl px-4 py-3 text-sm text-midnight focus:outline-none focus:border-ocean transition-colors";
   const labelClass = "block text-sm font-semibold text-slate-dark mb-2";
+
+  const itemsSummary = isCartMode
+    ? `${effectiveItems.length} ${effectiveItems.length === 1 ? "proizvod" : "proizvoda"}`
+    : `${effectiveItems[0].name} — ${effectiveItems[0].quantity} kom.`;
 
   return (
     <Section className="pt-32">
@@ -262,7 +304,7 @@ function BookingContent() {
         <h1 className="font-heading font-bold text-3xl text-midnight mb-2">
           Rezervacija
         </h1>
-        <p className="text-subtle mb-8">{product.name} — {quantityParam} kom.</p>
+        <p className="text-subtle mb-8">{itemsSummary}</p>
 
         {/* Steps indicator */}
         <div className="flex gap-2 mb-10">
@@ -280,15 +322,22 @@ function BookingContent() {
         {step === 1 && (
           <div className="space-y-6">
             <h2 className="font-heading font-semibold text-xl text-midnight">Izaberi datum i vreme</h2>
+
+            {mixedDurations && (
+              <p className="text-amber text-sm bg-amber/10 px-4 py-2.5 rounded-xl">
+                ⚠️ U korpi imaš mix satnih i dnevnih stavki. Termin (datum/vreme) se deli, ali svaka stavka koristi svoje trajanje.
+              </p>
+            )}
+
             <div>
-              <label className={labelClass}>Datum {durationParam === "day" ? "početka" : ""}</label>
+              <label className={labelClass}>Datum {effectiveDuration === "day" ? "početka" : ""}</label>
               <Calendar
                 selectedDate={form.date}
                 onSelect={(d) => set("date", d)}
                 bookedDates={bookedDates}
               />
             </div>
-            {durationParam === "day" && (
+            {effectiveDuration === "day" && (
               <div>
                 <label className={labelClass}>Broj dana</label>
                 <div className="flex gap-3">
@@ -326,7 +375,7 @@ function BookingContent() {
                 ))}
               </select>
             </div>
-            {durationParam === "hour" && (
+            {effectiveDuration === "hour" && (
               <div>
                 <label className={labelClass}>Trajanje (sati)</label>
                 <div className="flex gap-3">
@@ -411,36 +460,42 @@ function BookingContent() {
         {step === 3 && (
           <div className="space-y-6">
             <h2 className="font-heading font-semibold text-xl text-midnight">Potvrda rezervacije</h2>
-            <div className="bg-snow rounded-2xl p-6 border border-cloud space-y-4">
-              <div className="flex items-center gap-4 pb-4 border-b border-silver">
-                <div className="relative w-20 h-16 rounded-xl overflow-hidden">
-                  <Image src={product.image} alt="" fill sizes="80px" className="object-cover" unoptimized={product.image.startsWith("/uploads")} />
-                </div>
-                <div>
-                  <h3 className="font-heading font-bold text-midnight">{product.name}</h3>
-                  <p className="text-muted text-sm">{product.categoryLabel}</p>
-                </div>
+
+            {/* Items list */}
+            <div className="bg-snow rounded-2xl p-6 border border-cloud">
+              <h3 className="font-heading font-semibold text-sm text-midnight mb-4 uppercase tracking-wider">
+                {effectiveItems.length === 1 ? "Proizvod" : `Proizvodi (${effectiveItems.length})`}
+              </h3>
+              <div className="space-y-3">
+                {itemsWithPrices.map((it) => (
+                  <div key={`${it.productId}-${it.durationType}`} className="flex items-center gap-3 pb-3 border-b border-silver last:border-0 last:pb-0">
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                      <Image src={it.image} alt="" fill sizes="56px" className="object-cover" unoptimized={it.image.startsWith("/uploads")} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-heading font-semibold text-midnight truncate">{it.name}</p>
+                      <p className="text-muted text-xs">
+                        {it.quantity} × {it.durationType === "hour" ? `${form.hours}h` : `${form.days} dan(a)`}
+                      </p>
+                    </div>
+                    <p className="font-bold text-ocean flex-shrink-0">{it.subtotal.toLocaleString()} din</p>
+                  </div>
+                ))}
               </div>
+            </div>
+
+            {/* Details */}
+            <div className="bg-snow rounded-2xl p-6 border border-cloud space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted">Datum:</span>
                   <p className="font-semibold text-midnight">
-                    {form.date}{durationParam === "day" && form.days > 1 ? ` — ${endDate}` : ""}
+                    {form.date}{effectiveDuration === "day" && form.days > 1 ? ` — ${endDate}` : ""}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted">Vreme:</span>
                   <p className="font-semibold text-midnight">{form.time}</p>
-                </div>
-                <div>
-                  <span className="text-muted">Trajanje:</span>
-                  <p className="font-semibold text-midnight">
-                    {durationParam === "day" ? `${form.days} dan(a)` : `${form.hours} sat(a)`}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted">Količina:</span>
-                  <p className="font-semibold text-midnight">{quantityParam}</p>
                 </div>
               </div>
               <div className="pt-4 border-t border-silver">

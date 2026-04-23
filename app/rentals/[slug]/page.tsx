@@ -1,15 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import Section from "@/components/ui/Section";
 import ProductCard from "@/components/ui/Card";
 import type { Product } from "@/data/products";
+import { addToCart } from "@/lib/cart";
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
+  const router = useRouter();
+  const [added, setAdded] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [duration, setDuration] = useState<"hour" | "day">("hour");
@@ -225,13 +228,48 @@ export default function ProductDetailPage() {
                   <span className="font-bold text-2xl text-midnight">{total.toLocaleString()} din</span>
                 </div>
 
-                <Button
-                  href={`/booking?product=${product.slug}&duration=${duration}&quantity=${quantity}`}
-                  size="lg"
-                  className="w-full"
-                >
-                  Rezerviši
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    onClick={() => {
+                      addToCart({
+                        productId: product.id,
+                        slug: product.slug,
+                        name: product.name,
+                        image: product.image,
+                        pricePerHour: product.pricePerHour,
+                        pricePerDay: product.pricePerDay,
+                        durationType: duration,
+                        quantity,
+                      });
+                      setAdded(true);
+                      setTimeout(() => setAdded(false), 2000);
+                    }}
+                    variant="secondary"
+                    size="lg"
+                    className="flex-1"
+                  >
+                    {added ? "✓ Dodato u korpu" : "Dodaj u korpu"}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      addToCart({
+                        productId: product.id,
+                        slug: product.slug,
+                        name: product.name,
+                        image: product.image,
+                        pricePerHour: product.pricePerHour,
+                        pricePerDay: product.pricePerDay,
+                        durationType: duration,
+                        quantity,
+                      });
+                      router.push("/cart");
+                    }}
+                    size="lg"
+                    className="flex-1"
+                  >
+                    Rezerviši odmah
+                  </Button>
+                </div>
               </div>
 
               {!product.available && (

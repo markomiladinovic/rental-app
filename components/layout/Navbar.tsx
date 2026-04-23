@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useScrolled } from "@/hooks/useScrollDirection";
+import CartIcon from "./CartIcon";
 
 const NAV_LINKS = [
   { href: "/", label: "Početna" },
@@ -54,6 +55,7 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <CartIcon dark={useDark} />
           <Link
             href="/rentals"
             className="bg-ocean hover:bg-ocean-dark text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 shadow-cta hover:shadow-lg"
@@ -62,16 +64,19 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Mobile Hamburger */}
+        {/* Mobile: Cart + Hamburger */}
+        <div className="md:hidden flex items-center gap-1">
+          <CartIcon dark={useDark} />
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden flex flex-col gap-1.5 p-2"
+          className="flex flex-col gap-1.5 p-2"
           aria-label="Menu"
         >
           <span className={`block w-6 h-0.5 transition-all duration-300 ${useDark ? "bg-midnight" : "bg-white"} ${menuOpen ? "rotate-45 translate-y-2" : ""}`} />
           <span className={`block w-6 h-0.5 transition-all duration-300 ${useDark ? "bg-midnight" : "bg-white"} ${menuOpen ? "opacity-0" : ""}`} />
           <span className={`block w-6 h-0.5 transition-all duration-300 ${useDark ? "bg-midnight" : "bg-white"} ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`} />
         </button>
+        </div>
       </nav>
 
       {/* Mobile Menu */}
