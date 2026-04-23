@@ -86,6 +86,7 @@ export default function AdminSettingsPage() {
               { key: "header_image_rentals", label: "Oprema" },
               { key: "header_image_contact", label: "Kontakt" },
               { key: "header_image_booking", label: "Kako rezervisati" },
+              { key: "header_image_faq", label: "FAQ" },
             ].map((img) => (
               <div key={img.key}>
                 <label className={labelClass}>{img.label}</label>
