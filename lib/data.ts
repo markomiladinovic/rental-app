@@ -321,6 +321,26 @@ export async function getReservationsForProduct(
   return data.map(mapReservation);
 }
 
+export async function getPendingReminderReservations(targetDate: string): Promise<Reservation[]> {
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("start_date", targetDate)
+    .eq("status", "confirmed")
+    .eq("reminder_sent", false);
+
+  if (error || !data) return [];
+  return data.map(mapReservation);
+}
+
+export async function markRemindersSent(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await supabase
+    .from("reservations")
+    .update({ reminder_sent: true })
+    .in("id", ids);
+}
+
 export async function getAllReservations(): Promise<Reservation[]> {
   const { data, error } = await supabase
     .from("reservations")
