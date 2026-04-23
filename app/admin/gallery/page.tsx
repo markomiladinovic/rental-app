@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import ImageUpload from "@/components/admin/ImageUpload";
+import MultiImageUpload from "@/components/admin/MultiImageUpload";
 
 type GalleryImage = {
   id: string;
@@ -41,13 +41,13 @@ export default function AdminGalleryPage() {
     }
   };
 
-  const addImage = (url: string) => {
-    const newImage: GalleryImage = {
-      id: Date.now().toString(),
+  const addImages = (urls: string[]) => {
+    const newImages: GalleryImage[] = urls.map((url, i) => ({
+      id: `${Date.now()}-${i}`,
       url,
       alt: "Nova slika",
-    };
-    const updated = [...images, newImage];
+    }));
+    const updated = [...images, ...newImages];
     save(updated);
   };
 
@@ -86,14 +86,10 @@ export default function AdminGalleryPage() {
         )}
       </div>
 
-      {/* Add new image */}
+      {/* Add new images */}
       <div className="bg-white rounded-2xl border border-cloud p-6 mb-6">
-        <h3 className="font-heading font-semibold text-midnight mb-4">Dodaj novu sliku</h3>
-        <ImageUpload
-          currentImage=""
-          onImageChange={addImage}
-          label="Otpremi sliku za galeriju"
-        />
+        <h3 className="font-heading font-semibold text-midnight mb-4">Dodaj slike</h3>
+        <MultiImageUpload onUploaded={addImages} />
       </div>
 
       {/* Image list */}
