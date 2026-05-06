@@ -103,7 +103,6 @@ export default function AdminGalleryPage() {
                 fill
                 sizes="128px"
                 className="object-cover"
-                unoptimized={img.url.startsWith("/uploads")}
               />
             </div>
 

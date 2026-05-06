@@ -54,7 +54,6 @@ export default function Gallery({ images }: GalleryProps) {
                 fill
                 sizes="(max-width: 1024px) 100vw, 80vw"
                 className="object-cover"
-                unoptimized={img.url.startsWith("/uploads")}
                 priority={i === 0}
               />
             </div>

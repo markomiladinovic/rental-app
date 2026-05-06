@@ -71,7 +71,6 @@ export default function CartPage() {
                           fill
                           sizes="80px"
                           className="object-cover"
-                          unoptimized={item.image.startsWith("/uploads")}
                         />
                       </Link>
                       <div className="flex-1 min-w-0">

@@ -130,7 +130,6 @@ export default function AdminCategoriesPage() {
                   fill
                   sizes="96px"
                   className="object-cover"
-                  unoptimized={cat.image.startsWith("/uploads")}
                 />
               </div>
               <div className="flex-1 min-w-0">

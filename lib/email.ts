@@ -96,6 +96,44 @@ export async function sendReservationEmail(data: {
   });
 }
 
+export async function sendWaitlistAvailableEmail(email: string, productName: string, productLink: string) {
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [email],
+    subject: `${productName} je ponovo dostupan!`,
+    html: `
+      <h2>Dobre vesti — proizvod je slobodan!</h2>
+      <p>Pratiš dostupnost <strong>${productName}</strong>. Sada je ponovo slobodan za rezervaciju.</p>
+      <p style="margin:24px 0;">
+        <a href="${productLink}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;font-weight:600;text-decoration:none;border-radius:12px;">
+          Rezerviši sada
+        </a>
+      </p>
+      <p style="color:#64748b;font-size:13px;">Požuri — drugi korisnici takođe primaju ovo obaveštenje.</p>
+      <p style="margin-top:24px;color:#94a3b8;font-size:12px;">BoMa Adventures</p>
+    `,
+  });
+}
+
+export async function sendMagicLinkEmail(email: string, link: string) {
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: [email],
+    subject: "Pristup tvojim rezervacijama — BoMa Adventures",
+    html: `
+      <h2>Pristup tvojim rezervacijama</h2>
+      <p>Klikni na dugme ispod da vidiš svoje rezervacije i upravljaš njima.</p>
+      <p style="margin:24px 0;">
+        <a href="${link}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;font-weight:600;text-decoration:none;border-radius:12px;">
+          Pogledaj moje rezervacije
+        </a>
+      </p>
+      <p style="color:#64748b;font-size:13px;">Link važi 1 sat. Ako ga nisi ti tražio, ignoriši ovaj email.</p>
+      <p style="margin-top:24px;color:#94a3b8;font-size:12px;">BoMa Adventures</p>
+    `,
+  });
+}
+
 export async function sendCancellationEmail(reservation: Reservation) {
   if (!reservation.customerEmail) return;
 

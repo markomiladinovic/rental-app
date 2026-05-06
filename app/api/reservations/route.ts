@@ -1,4 +1,4 @@
-import { getAllReservations, createReservation, createReservationGroup, getProducts, getReservationsForProduct } from "@/lib/data";
+import { getAllReservations, createReservation, createReservationGroup, getProducts, getReservationsForProduct, findPromoCode, validatePromoCode, incrementPromoCodeUses } from "@/lib/data";
 import { sendReservationEmail, sendGroupReservationEmail } from "@/lib/email";
 import { validateReservationItem } from "@/lib/validation";
 
@@ -88,10 +88,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const reservations = await createReservationGroup(body.items);
+    // Server-side promo code validation and apply discount
+    const promoCode = typeof body.promoCode === "string" ? body.promoCode.trim() : "";
+    let discountPercent = 0;
+    if (promoCode) {
+      const promo = await findPromoCode(promoCode);
+      if (!promo) return Response.json({ error: "Promo kod nije validan" }, { status: 400 });
+      const check = validatePromoCode(promo);
+      if (!check.ok) return Response.json({ error: check.reason }, { status: 400 });
+      discountPercent = promo.discountPercent;
+    }
+
+    const itemsWithPromo = body.items.map((it: Record<string, unknown>) => {
+      const original = (it.totalPrice as number) || 0;
+      const discounted = Math.round(original * (1 - discountPercent / 100));
+      return {
+        ...it,
+        totalPrice: discounted,
+        promoCode: promoCode || null,
+        discountPercent,
+      };
+    });
+
+    const reservations = await createReservationGroup(itemsWithPromo);
     if (!reservations) {
       return Response.json({ error: "Greška pri kreiranju rezervacije" }, { status: 500 });
     }
+
+    if (promoCode) await incrementPromoCodeUses(promoCode);
 
     sendGroupReservationEmail(reservations).catch(() => {});
 
@@ -114,11 +138,33 @@ export async function POST(request: Request) {
     );
   }
 
-  const reservation = await createReservation(body);
+  // Server-side promo validation for single reservation
+  const promoCode = typeof body.promoCode === "string" ? body.promoCode.trim() : "";
+  let discountPercent = 0;
+  if (promoCode) {
+    const promo = await findPromoCode(promoCode);
+    if (!promo) return Response.json({ error: "Promo kod nije validan" }, { status: 400 });
+    const check = validatePromoCode(promo);
+    if (!check.ok) return Response.json({ error: check.reason }, { status: 400 });
+    discountPercent = promo.discountPercent;
+  }
+
+  const original = body.totalPrice || 0;
+  const discounted = Math.round(original * (1 - discountPercent / 100));
+  const reservationInput = {
+    ...body,
+    totalPrice: discounted,
+    promoCode: promoCode || null,
+    discountPercent,
+  };
+
+  const reservation = await createReservation(reservationInput);
 
   if (!reservation) {
     return Response.json({ error: "Greška pri kreiranju rezervacije" }, { status: 500 });
   }
+
+  if (promoCode) await incrementPromoCodeUses(promoCode);
 
   sendReservationEmail({
     productName: reservation.productName,

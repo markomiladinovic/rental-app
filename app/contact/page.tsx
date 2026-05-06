@@ -46,7 +46,7 @@ export default function ContactPage() {
       <div className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
         {settings.header_image_contact && (
           <div className="absolute inset-0">
-            <Image src={settings.header_image_contact} alt="" fill className="object-cover" unoptimized />
+            <Image src={settings.header_image_contact} alt="" fill priority sizes="100vw" className="object-cover" />
             <div className="absolute inset-0 bg-white/70" />
           </div>
         )}

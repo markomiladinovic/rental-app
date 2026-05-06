@@ -226,6 +226,8 @@ export type Reservation = {
   createdAt: string;
   seen: boolean;
   bookingGroupId?: string | null;
+  promoCode?: string | null;
+  discountPercent?: number;
 };
 
 function mapReservation(r: Record<string, unknown>): Reservation {
@@ -248,6 +250,8 @@ function mapReservation(r: Record<string, unknown>): Reservation {
     createdAt: r.created_at as string,
     seen: r.seen as boolean,
     bookingGroupId: (r.booking_group_id as string) || null,
+    promoCode: (r.promo_code as string) || null,
+    discountPercent: (r.discount_percent as number) ?? 0,
   };
 }
 
@@ -269,6 +273,8 @@ export async function createReservation(data: Omit<Reservation, "id" | "status" 
       note: data.note,
       total_price: data.totalPrice,
       booking_group_id: data.bookingGroupId || null,
+      promo_code: data.promoCode || null,
+      discount_percent: data.discountPercent ?? 0,
     })
     .select()
     .single();
@@ -300,6 +306,8 @@ export async function createReservationGroup(
         note: it.note,
         total_price: it.totalPrice,
         booking_group_id: groupId,
+        promo_code: it.promoCode || null,
+        discount_percent: it.discountPercent ?? 0,
       }))
     )
     .select();
@@ -469,6 +477,244 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
     .eq("id", id);
 
   return !error;
+}
+
+// --- Promo codes ---
+
+export type PromoCode = {
+  id: string;
+  code: string;
+  discountPercent: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  maxUses: number | null;
+  usesCount: number;
+  active: boolean;
+  description: string | null;
+  createdAt: string;
+};
+
+function mapPromoCode(p: Record<string, unknown>): PromoCode {
+  return {
+    id: p.id as string,
+    code: p.code as string,
+    discountPercent: p.discount_percent as number,
+    validFrom: (p.valid_from as string) || null,
+    validUntil: (p.valid_until as string) || null,
+    maxUses: (p.max_uses as number) ?? null,
+    usesCount: p.uses_count as number,
+    active: p.active as boolean,
+    description: (p.description as string) || null,
+    createdAt: p.created_at as string,
+  };
+}
+
+export async function getPromoCodes(): Promise<PromoCode[]> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map(mapPromoCode);
+}
+
+export async function createPromoCode(
+  input: Omit<PromoCode, "id" | "usesCount" | "createdAt">
+): Promise<PromoCode | null> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .insert({
+      code: input.code.toUpperCase(),
+      discount_percent: input.discountPercent,
+      valid_from: input.validFrom,
+      valid_until: input.validUntil,
+      max_uses: input.maxUses,
+      active: input.active,
+      description: input.description,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return mapPromoCode(data);
+}
+
+export async function updatePromoCode(input: PromoCode): Promise<PromoCode | null> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .update({
+      code: input.code.toUpperCase(),
+      discount_percent: input.discountPercent,
+      valid_from: input.validFrom,
+      valid_until: input.validUntil,
+      max_uses: input.maxUses,
+      active: input.active,
+      description: input.description,
+    })
+    .eq("id", input.id)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return mapPromoCode(data);
+}
+
+export async function deletePromoCode(id: string): Promise<boolean> {
+  const { error } = await supabase.from("promo_codes").delete().eq("id", id);
+  return !error;
+}
+
+// --- Waitlist (notify me when available) ---
+
+export type WaitlistEntry = {
+  id: string;
+  productId: string;
+  productSlug: string;
+  productName: string;
+  email: string;
+  notifiedAt: string | null;
+  createdAt: string;
+};
+
+function mapWaitlist(w: Record<string, unknown>): WaitlistEntry {
+  return {
+    id: w.id as string,
+    productId: w.product_id as string,
+    productSlug: w.product_slug as string,
+    productName: w.product_name as string,
+    email: w.email as string,
+    notifiedAt: (w.notified_at as string) || null,
+    createdAt: w.created_at as string,
+  };
+}
+
+export async function addWaitlistEntry(
+  productId: string,
+  productSlug: string,
+  productName: string,
+  email: string
+): Promise<boolean> {
+  // Avoid duplicate active entries
+  const { data: existing } = await supabase
+    .from("waitlist")
+    .select("id")
+    .eq("product_id", productId)
+    .ilike("email", email.trim())
+    .is("notified_at", null)
+    .limit(1);
+
+  if (existing && existing.length > 0) return true;
+
+  const { error } = await supabase.from("waitlist").insert({
+    product_id: productId,
+    product_slug: productSlug,
+    product_name: productName,
+    email: email.trim().toLowerCase(),
+  });
+
+  return !error;
+}
+
+export async function getActiveWaitlist(): Promise<WaitlistEntry[]> {
+  const { data, error } = await supabase
+    .from("waitlist")
+    .select("*")
+    .is("notified_at", null);
+
+  if (error || !data) return [];
+  return data.map(mapWaitlist);
+}
+
+export async function markWaitlistNotified(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await supabase
+    .from("waitlist")
+    .update({ notified_at: new Date().toISOString() })
+    .in("id", ids);
+}
+
+// --- Access tokens for "My reservations" ---
+
+export type AccessToken = {
+  id: string;
+  token: string;
+  email: string;
+  expiresAt: string;
+  usedAt: string | null;
+  createdAt: string;
+};
+
+export async function createAccessToken(email: string, expiresInMinutes = 60): Promise<string | null> {
+  const token = (await import("crypto")).randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString();
+  const { error } = await supabase
+    .from("access_tokens")
+    .insert({ token, email: email.trim().toLowerCase(), expires_at: expires });
+  if (error) return null;
+  return token;
+}
+
+export async function consumeAccessToken(token: string): Promise<{ email: string } | null> {
+  const { data, error } = await supabase
+    .from("access_tokens")
+    .select("*")
+    .eq("token", token)
+    .single();
+
+  if (error || !data) return null;
+
+  const expiresAt = new Date(data.expires_at as string);
+  if (expiresAt < new Date()) return null;
+  // Allow re-use within validity window (so user can refresh page)
+  return { email: data.email as string };
+}
+
+export async function getReservationsByEmail(email: string): Promise<Reservation[]> {
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .ilike("customer_email", email.trim())
+    .order("start_date", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map(mapReservation);
+}
+
+export async function findPromoCode(code: string): Promise<PromoCode | null> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .select("*")
+    .eq("code", code.toUpperCase())
+    .eq("active", true)
+    .single();
+
+  if (error || !data) return null;
+  return mapPromoCode(data);
+}
+
+export async function incrementPromoCodeUses(code: string): Promise<void> {
+  const { data } = await supabase
+    .from("promo_codes")
+    .select("uses_count")
+    .eq("code", code.toUpperCase())
+    .single();
+
+  if (!data) return;
+
+  await supabase
+    .from("promo_codes")
+    .update({ uses_count: (data.uses_count as number) + 1 })
+    .eq("code", code.toUpperCase());
+}
+
+export function validatePromoCode(p: PromoCode): { ok: true } | { ok: false; reason: string } {
+  if (!p.active) return { ok: false, reason: "Kod nije aktivan" };
+  const today = new Date().toISOString().split("T")[0];
+  if (p.validFrom && today < p.validFrom) return { ok: false, reason: "Kod još nije aktivan" };
+  if (p.validUntil && today > p.validUntil) return { ok: false, reason: "Kod je istekao" };
+  if (p.maxUses !== null && p.usesCount >= p.maxUses) return { ok: false, reason: "Kod je iskorišćen" };
+  return { ok: true };
 }
 
 // --- FAQ ---
