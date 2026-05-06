@@ -58,7 +58,10 @@ export default function Calendar({ selectedDate, onSelect, bookedDates }: Calend
     }
   };
 
-  const canGoPrev = viewYear > today.getFullYear() || viewMonth > today.getMonth() || viewYear > today.getFullYear();
+  // Prevent navigating to months before current month
+  const canGoPrev =
+    viewYear > today.getFullYear() ||
+    (viewYear === today.getFullYear() && viewMonth > today.getMonth());
 
   return (
     <div className="bg-white border border-cloud rounded-2xl p-5">

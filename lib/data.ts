@@ -42,6 +42,7 @@ export async function getProducts(): Promise<Product[]> {
     gallery: p.gallery || [],
     features: p.features || [],
     available: p.available,
+    stock: p.stock ?? 1,
   }));
 }
 
@@ -61,6 +62,7 @@ export async function createProduct(product: Omit<Product, "id">): Promise<Produ
       gallery: product.gallery,
       features: product.features,
       available: product.available,
+      stock: product.stock ?? 1,
     })
     .select()
     .single();
@@ -81,6 +83,7 @@ export async function createProduct(product: Omit<Product, "id">): Promise<Produ
     gallery: data.gallery || [],
     features: data.features || [],
     available: data.available,
+    stock: data.stock ?? 1,
   };
 }
 
@@ -100,6 +103,7 @@ export async function updateProduct(product: Product): Promise<Product | null> {
       gallery: product.gallery,
       features: product.features,
       available: product.available,
+      stock: product.stock ?? 1,
       updated_at: new Date().toISOString(),
     })
     .eq("id", product.id)
@@ -122,6 +126,7 @@ export async function updateProduct(product: Product): Promise<Product | null> {
     gallery: data.gallery || [],
     features: data.features || [],
     available: data.available,
+    stock: data.stock ?? 1,
   };
 }
 
