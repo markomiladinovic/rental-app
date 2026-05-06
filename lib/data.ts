@@ -226,6 +226,8 @@ export type Reservation = {
   createdAt: string;
   seen: boolean;
   bookingGroupId?: string | null;
+  promoCode?: string | null;
+  discountPercent?: number;
 };
 
 function mapReservation(r: Record<string, unknown>): Reservation {
@@ -248,6 +250,8 @@ function mapReservation(r: Record<string, unknown>): Reservation {
     createdAt: r.created_at as string,
     seen: r.seen as boolean,
     bookingGroupId: (r.booking_group_id as string) || null,
+    promoCode: (r.promo_code as string) || null,
+    discountPercent: (r.discount_percent as number) ?? 0,
   };
 }
 
@@ -269,6 +273,8 @@ export async function createReservation(data: Omit<Reservation, "id" | "status" 
       note: data.note,
       total_price: data.totalPrice,
       booking_group_id: data.bookingGroupId || null,
+      promo_code: data.promoCode || null,
+      discount_percent: data.discountPercent ?? 0,
     })
     .select()
     .single();
@@ -300,6 +306,8 @@ export async function createReservationGroup(
         note: it.note,
         total_price: it.totalPrice,
         booking_group_id: groupId,
+        promo_code: it.promoCode || null,
+        discount_percent: it.discountPercent ?? 0,
       }))
     )
     .select();
@@ -469,6 +477,128 @@ export async function deleteTestimonial(id: string): Promise<boolean> {
     .eq("id", id);
 
   return !error;
+}
+
+// --- Promo codes ---
+
+export type PromoCode = {
+  id: string;
+  code: string;
+  discountPercent: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  maxUses: number | null;
+  usesCount: number;
+  active: boolean;
+  description: string | null;
+  createdAt: string;
+};
+
+function mapPromoCode(p: Record<string, unknown>): PromoCode {
+  return {
+    id: p.id as string,
+    code: p.code as string,
+    discountPercent: p.discount_percent as number,
+    validFrom: (p.valid_from as string) || null,
+    validUntil: (p.valid_until as string) || null,
+    maxUses: (p.max_uses as number) ?? null,
+    usesCount: p.uses_count as number,
+    active: p.active as boolean,
+    description: (p.description as string) || null,
+    createdAt: p.created_at as string,
+  };
+}
+
+export async function getPromoCodes(): Promise<PromoCode[]> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map(mapPromoCode);
+}
+
+export async function createPromoCode(
+  input: Omit<PromoCode, "id" | "usesCount" | "createdAt">
+): Promise<PromoCode | null> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .insert({
+      code: input.code.toUpperCase(),
+      discount_percent: input.discountPercent,
+      valid_from: input.validFrom,
+      valid_until: input.validUntil,
+      max_uses: input.maxUses,
+      active: input.active,
+      description: input.description,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return mapPromoCode(data);
+}
+
+export async function updatePromoCode(input: PromoCode): Promise<PromoCode | null> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .update({
+      code: input.code.toUpperCase(),
+      discount_percent: input.discountPercent,
+      valid_from: input.validFrom,
+      valid_until: input.validUntil,
+      max_uses: input.maxUses,
+      active: input.active,
+      description: input.description,
+    })
+    .eq("id", input.id)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return mapPromoCode(data);
+}
+
+export async function deletePromoCode(id: string): Promise<boolean> {
+  const { error } = await supabase.from("promo_codes").delete().eq("id", id);
+  return !error;
+}
+
+export async function findPromoCode(code: string): Promise<PromoCode | null> {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .select("*")
+    .eq("code", code.toUpperCase())
+    .eq("active", true)
+    .single();
+
+  if (error || !data) return null;
+  return mapPromoCode(data);
+}
+
+export async function incrementPromoCodeUses(code: string): Promise<void> {
+  const { data } = await supabase
+    .from("promo_codes")
+    .select("uses_count")
+    .eq("code", code.toUpperCase())
+    .single();
+
+  if (!data) return;
+
+  await supabase
+    .from("promo_codes")
+    .update({ uses_count: (data.uses_count as number) + 1 })
+    .eq("code", code.toUpperCase());
+}
+
+export function validatePromoCode(p: PromoCode): { ok: true } | { ok: false; reason: string } {
+  if (!p.active) return { ok: false, reason: "Kod nije aktivan" };
+  const today = new Date().toISOString().split("T")[0];
+  if (p.validFrom && today < p.validFrom) return { ok: false, reason: "Kod još nije aktivan" };
+  if (p.validUntil && today > p.validUntil) return { ok: false, reason: "Kod je istekao" };
+  if (p.maxUses !== null && p.usesCount >= p.maxUses) return { ok: false, reason: "Kod je iskorišćen" };
+  return { ok: true };
 }
 
 // --- FAQ ---

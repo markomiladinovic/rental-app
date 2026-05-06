@@ -107,6 +107,42 @@ function BookingContent() {
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const [confirmed, setConfirmed] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoApplied, setPromoApplied] = useState<{ code: string; discountPercent: number } | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [checkingPromo, setCheckingPromo] = useState(false);
+
+  const applyPromoCode = async () => {
+    const code = promoInput.trim();
+    if (!code) return;
+    setCheckingPromo(true);
+    setPromoError("");
+    try {
+      const res = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setPromoApplied({ code: data.code, discountPercent: data.discountPercent });
+        setPromoError("");
+      } else {
+        setPromoApplied(null);
+        setPromoError(data.error || "Kod nije validan");
+      }
+    } catch {
+      setPromoError("Greška pri proveri koda");
+    } finally {
+      setCheckingPromo(false);
+    }
+  };
+
+  const removePromo = () => {
+    setPromoApplied(null);
+    setPromoInput("");
+    setPromoError("");
+  };
 
   const endDate = effectiveDuration === "day" && form.date
     ? (() => {
@@ -123,7 +159,11 @@ function BookingContent() {
     const subtotal = unit * it.quantity * multiplier;
     return { ...it, subtotal };
   });
-  const total = itemsWithPrices.reduce((sum, it) => sum + it.subtotal, 0);
+  const subtotal = itemsWithPrices.reduce((sum, it) => sum + it.subtotal, 0);
+  const discountAmount = promoApplied
+    ? Math.round(subtotal * (promoApplied.discountPercent / 100))
+    : 0;
+  const total = subtotal - discountAmount;
 
   const handleConfirm = async () => {
     if (effectiveItems.length === 0) return;
@@ -132,6 +172,7 @@ function BookingContent() {
 
     try {
       const body = {
+        promoCode: promoApplied?.code || undefined,
         items: effectiveItems.map((it) => {
           const unit = it.durationType === "day" ? it.pricePerDay : it.pricePerHour;
           const multiplier = it.durationType === "hour" ? form.hours : form.days;
@@ -512,9 +553,65 @@ function BookingContent() {
                   <span className="font-medium text-midnight text-sm">{form.phone}</span>
                 </div>
               </div>
-              <div className="pt-4 border-t border-silver flex items-center justify-between">
-                <span className="font-bold text-lg text-midnight">Ukupno:</span>
-                <span className="font-bold text-2xl text-ocean">{total.toLocaleString()} din</span>
+              {/* Promo code input */}
+              <div className="pt-4 border-t border-silver">
+                {promoApplied ? (
+                  <div className="flex items-center justify-between gap-3 bg-emerald/10 px-4 py-2.5 rounded-xl">
+                    <div className="text-sm">
+                      <span className="text-emerald font-semibold">✓ {promoApplied.code}</span>
+                      <span className="text-muted"> — popust {promoApplied.discountPercent}%</span>
+                    </div>
+                    <button
+                      onClick={removePromo}
+                      className="text-xs text-muted hover:text-rose transition-colors cursor-pointer"
+                    >
+                      Ukloni
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <label className={labelClass}>Promo kod (opciono)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                        placeholder="npr. LETO20"
+                        className={`${inputClass} font-mono uppercase`}
+                      />
+                      <button
+                        type="button"
+                        onClick={applyPromoCode}
+                        disabled={checkingPromo || !promoInput.trim()}
+                        className="bg-cloud hover:bg-silver text-midnight text-sm font-semibold px-4 py-2.5 rounded-xl transition-all flex-shrink-0 disabled:opacity-50 cursor-pointer"
+                      >
+                        {checkingPromo ? "Provera..." : "Primeni"}
+                      </button>
+                    </div>
+                    {promoError && (
+                      <p className="text-rose text-xs mt-1.5">{promoError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-silver space-y-1">
+                {promoApplied && (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted">Osnovna cena:</span>
+                      <span className="text-subtle">{subtotal.toLocaleString()} din</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-emerald">Popust ({promoApplied.discountPercent}%):</span>
+                      <span className="text-emerald font-semibold">−{discountAmount.toLocaleString()} din</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-bold text-lg text-midnight">Ukupno:</span>
+                  <span className="font-bold text-2xl text-ocean">{total.toLocaleString()} din</span>
+                </div>
               </div>
             </div>
 
