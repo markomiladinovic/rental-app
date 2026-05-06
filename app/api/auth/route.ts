@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import bcrypt from "bcryptjs";
 import { getAdminByEmail } from "@/lib/data";
 
 const SESSION_COOKIE = "admin_session";
@@ -12,12 +13,21 @@ function generateToken(): string {
   return Buffer.from(`${secret}-${timestamp}-${random}`).toString("base64");
 }
 
+async function verifyPassword(input: string, stored: string): Promise<boolean> {
+  // Bcrypt hashes start with $2a$, $2b$ or $2y$
+  if (stored.startsWith("$2")) {
+    return bcrypt.compare(input, stored);
+  }
+  // Legacy plaintext fallback (will be removed once all admins are migrated)
+  return input === stored;
+}
+
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json();
 
   const admin = await getAdminByEmail(email);
 
-  if (!admin || admin.password !== password) {
+  if (!admin || !(await verifyPassword(password, admin.password))) {
     return Response.json({ error: "Pogrešan email ili lozinka" }, { status: 401 });
   }
 
