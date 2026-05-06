@@ -1,8 +1,16 @@
 import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(request: NextRequest) {
+  // Require admin session
+  const cookieStore = await cookies();
+  const session = cookieStore.get("admin_session");
+  if (!session?.value) {
+    return Response.json({ error: "Neautorizovano" }, { status: 401 });
+  }
+
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
 
