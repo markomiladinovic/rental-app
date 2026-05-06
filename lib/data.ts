@@ -565,6 +565,53 @@ export async function deletePromoCode(id: string): Promise<boolean> {
   return !error;
 }
 
+// --- Access tokens for "My reservations" ---
+
+export type AccessToken = {
+  id: string;
+  token: string;
+  email: string;
+  expiresAt: string;
+  usedAt: string | null;
+  createdAt: string;
+};
+
+export async function createAccessToken(email: string, expiresInMinutes = 60): Promise<string | null> {
+  const token = (await import("crypto")).randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString();
+  const { error } = await supabase
+    .from("access_tokens")
+    .insert({ token, email: email.trim().toLowerCase(), expires_at: expires });
+  if (error) return null;
+  return token;
+}
+
+export async function consumeAccessToken(token: string): Promise<{ email: string } | null> {
+  const { data, error } = await supabase
+    .from("access_tokens")
+    .select("*")
+    .eq("token", token)
+    .single();
+
+  if (error || !data) return null;
+
+  const expiresAt = new Date(data.expires_at as string);
+  if (expiresAt < new Date()) return null;
+  // Allow re-use within validity window (so user can refresh page)
+  return { email: data.email as string };
+}
+
+export async function getReservationsByEmail(email: string): Promise<Reservation[]> {
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .ilike("customer_email", email.trim())
+    .order("start_date", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map(mapReservation);
+}
+
 export async function findPromoCode(code: string): Promise<PromoCode | null> {
   const { data, error } = await supabase
     .from("promo_codes")
