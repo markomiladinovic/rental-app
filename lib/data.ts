@@ -565,6 +565,75 @@ export async function deletePromoCode(id: string): Promise<boolean> {
   return !error;
 }
 
+// --- Waitlist (notify me when available) ---
+
+export type WaitlistEntry = {
+  id: string;
+  productId: string;
+  productSlug: string;
+  productName: string;
+  email: string;
+  notifiedAt: string | null;
+  createdAt: string;
+};
+
+function mapWaitlist(w: Record<string, unknown>): WaitlistEntry {
+  return {
+    id: w.id as string,
+    productId: w.product_id as string,
+    productSlug: w.product_slug as string,
+    productName: w.product_name as string,
+    email: w.email as string,
+    notifiedAt: (w.notified_at as string) || null,
+    createdAt: w.created_at as string,
+  };
+}
+
+export async function addWaitlistEntry(
+  productId: string,
+  productSlug: string,
+  productName: string,
+  email: string
+): Promise<boolean> {
+  // Avoid duplicate active entries
+  const { data: existing } = await supabase
+    .from("waitlist")
+    .select("id")
+    .eq("product_id", productId)
+    .ilike("email", email.trim())
+    .is("notified_at", null)
+    .limit(1);
+
+  if (existing && existing.length > 0) return true;
+
+  const { error } = await supabase.from("waitlist").insert({
+    product_id: productId,
+    product_slug: productSlug,
+    product_name: productName,
+    email: email.trim().toLowerCase(),
+  });
+
+  return !error;
+}
+
+export async function getActiveWaitlist(): Promise<WaitlistEntry[]> {
+  const { data, error } = await supabase
+    .from("waitlist")
+    .select("*")
+    .is("notified_at", null);
+
+  if (error || !data) return [];
+  return data.map(mapWaitlist);
+}
+
+export async function markWaitlistNotified(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await supabase
+    .from("waitlist")
+    .update({ notified_at: new Date().toISOString() })
+    .in("id", ids);
+}
+
 // --- Access tokens for "My reservations" ---
 
 export type AccessToken = {

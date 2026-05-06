@@ -19,6 +19,10 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [todayBookings, setTodayBookings] = useState<number | null>(null);
   const [nextFreeDate, setNextFreeDate] = useState<string | null>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistDone, setWaitlistDone] = useState(false);
+  const [waitlistError, setWaitlistError] = useState("");
 
   useEffect(() => {
     fetch("/api/products").then((r) => r.json()).then(setProducts);
@@ -279,6 +283,62 @@ export default function ProductDetailPage() {
                     <p className="text-subtle text-sm mt-1">
                       Slobodno od {new Date(nextFreeDate).toLocaleDateString("sr-Latn-RS", { day: "numeric", month: "long", year: "numeric" })}
                     </p>
+                  )}
+                </div>
+              )}
+
+              {/* Notify me when available */}
+              {(!product.available || nextFreeDate) && (
+                <div className="bg-snow border border-cloud rounded-xl p-4 mt-3">
+                  {waitlistDone ? (
+                    <p className="text-sm text-emerald font-medium text-center">
+                      ✓ Hvala! Javićemo ti čim se proizvod oslobodi.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-slate-dark font-medium mb-2">
+                        🔔 Obavesti me kad bude slobodan
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={waitlistEmail}
+                          onChange={(e) => setWaitlistEmail(e.target.value)}
+                          placeholder="tvoj@email.com"
+                          className="flex-1 bg-white border border-silver rounded-xl px-3 py-2 text-sm text-midnight focus:outline-none focus:border-ocean transition-colors"
+                        />
+                        <button
+                          onClick={async () => {
+                            setWaitlistError("");
+                            setWaitlistSubmitting(true);
+                            try {
+                              const res = await fetch("/api/waitlist", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ productId: product.id, email: waitlistEmail }),
+                              });
+                              if (res.ok) {
+                                setWaitlistDone(true);
+                              } else {
+                                const data = await res.json();
+                                setWaitlistError(data.error || "Greška");
+                              }
+                            } catch {
+                              setWaitlistError("Greška pri prijavi");
+                            } finally {
+                              setWaitlistSubmitting(false);
+                            }
+                          }}
+                          disabled={!waitlistEmail || waitlistSubmitting}
+                          className="bg-ocean hover:bg-ocean-dark text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                          {waitlistSubmitting ? "..." : "Prijavi me"}
+                        </button>
+                      </div>
+                      {waitlistError && (
+                        <p className="text-rose text-xs mt-1.5">{waitlistError}</p>
+                      )}
+                    </>
                   )}
                 </div>
               )}
