@@ -12,6 +12,7 @@ export default function RentalsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("default");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [nextFreeDates, setNextFreeDates] = useState<Record<string, string | null>>({});
   const [headerImage, setHeaderImage] = useState("");
 
@@ -60,11 +61,27 @@ export default function RentalsPage() {
       ? products
       : products.filter((p) => p.category === activeCategory);
 
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter((p) => {
+        const haystack = [
+          p.name,
+          p.description,
+          p.shortDescription,
+          p.categoryLabel,
+          ...(p.features || []),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+
     if (sortBy === "price-asc") result = [...result].sort((a, b) => a.pricePerHour - b.pricePerHour);
     if (sortBy === "price-desc") result = [...result].sort((a, b) => b.pricePerHour - a.pricePerHour);
 
     return result;
-  }, [activeCategory, sortBy, products]);
+  }, [activeCategory, sortBy, products, searchQuery]);
 
   return (
     <>
@@ -91,6 +108,32 @@ export default function RentalsPage() {
       </div>
 
       <Section>
+        {/* Search */}
+        <div className="relative mb-6 max-w-xl">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Pretraži opremu (npr. SUP, kaciga, električni...)"
+            className="w-full bg-white border-2 border-silver rounded-xl pl-11 pr-10 py-3 text-sm text-midnight focus:outline-none focus:border-ocean transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              aria-label="Obriši pretragu"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full text-muted hover:text-midnight hover:bg-cloud flex items-center justify-center transition-colors cursor-pointer"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
         {/* Filters */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
           {/* Category filter */}

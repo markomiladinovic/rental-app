@@ -1,5 +1,6 @@
 import { getAllTestimonials, createTestimonial, updateTestimonial, deleteTestimonial, updateTestimonialStatus } from "@/lib/data";
 import { sendTestimonialPendingEmail } from "@/lib/email";
+import { validateTestimonial } from "@/lib/validation";
 
 export async function GET() {
   const testimonials = await getAllTestimonials();
@@ -8,7 +9,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const testimonial = await createTestimonial(body);
+  const result = validateTestimonial(body);
+
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: 400 });
+  }
+
+  const testimonial = await createTestimonial(result.data);
 
   if (!testimonial) {
     return Response.json({ error: "Greška pri kreiranju" }, { status: 500 });
