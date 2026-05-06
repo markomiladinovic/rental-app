@@ -12,6 +12,7 @@ export type Product = {
   gallery: string[];
   features: string[];
   available: boolean;
+  stock?: number;
 };
 
 export const CATEGORIES = [

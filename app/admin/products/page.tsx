@@ -186,6 +186,7 @@ function AddProduct({
     gallery: [] as string[],
     features: [] as string[],
     available: true,
+    stock: 1,
   });
   const [featureInput, setFeatureInput] = useState("");
 
@@ -265,7 +266,7 @@ function AddProduct({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div>
           <label className={labelClass}>Cena po satu (din)</label>
           <input
@@ -283,6 +284,17 @@ function AddProduct({
             value={form.pricePerDay || ""}
             onChange={(e) => set("pricePerDay", parseInt(e.target.value) || 0)}
             placeholder="3000"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Količina (komada)</label>
+          <input
+            type="number"
+            min="1"
+            value={form.stock || ""}
+            onChange={(e) => set("stock", parseInt(e.target.value) || 1)}
+            placeholder="1"
             className={inputClass}
           />
         </div>
@@ -397,7 +409,7 @@ function EditProduct({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         <div>
           <label className={labelClass}>Cena po satu (din)</label>
           <input
@@ -413,6 +425,16 @@ function EditProduct({
             type="number"
             value={form.pricePerDay}
             onChange={(e) => set("pricePerDay", parseInt(e.target.value) || 0)}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Količina (komada)</label>
+          <input
+            type="number"
+            min="1"
+            value={form.stock ?? 1}
+            onChange={(e) => set("stock", parseInt(e.target.value) || 1)}
             className={inputClass}
           />
         </div>
