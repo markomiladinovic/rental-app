@@ -1,5 +1,6 @@
 import { getAllReservations, createReservation, createReservationGroup, getProducts, getReservationsForProduct } from "@/lib/data";
 import { sendReservationEmail, sendGroupReservationEmail } from "@/lib/email";
+import { validateReservationItem } from "@/lib/validation";
 
 export async function GET() {
   const reservations = await getAllReservations();
@@ -72,6 +73,11 @@ export async function POST(request: Request) {
 
   // Batch (cart) reservation
   if (Array.isArray(body.items) && body.items.length > 0) {
+    for (const item of body.items) {
+      const err = validateReservationItem(item);
+      if (err) return Response.json({ error: err }, { status: 400 });
+    }
+
     const conflict = await checkStockOrConflict(body.items);
     if (conflict) {
       return Response.json(
@@ -93,6 +99,11 @@ export async function POST(request: Request) {
   }
 
   // Single reservation (backward compatible)
+  const validationErr = validateReservationItem(body);
+  if (validationErr) {
+    return Response.json({ error: validationErr }, { status: 400 });
+  }
+
   const conflict = await checkStockOrConflict([body]);
   if (conflict) {
     return Response.json(

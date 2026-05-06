@@ -1,14 +1,16 @@
 import { sendContactEmail } from "@/lib/email";
+import { validateContact } from "@/lib/validation";
 
 export async function POST(request: Request) {
-  const { name, email, message } = await request.json();
+  const body = await request.json();
+  const result = validateContact(body);
 
-  if (!name || !email || !message) {
-    return Response.json({ error: "Sva polja su obavezna" }, { status: 400 });
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: 400 });
   }
 
   try {
-    await sendContactEmail({ name, email, message });
+    await sendContactEmail(result.data);
     return Response.json({ success: true });
   } catch {
     return Response.json({ error: "Greška pri slanju poruke" }, { status: 500 });
