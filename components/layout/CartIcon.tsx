@@ -72,7 +72,6 @@ export default function CartIcon({ dark }: { dark: boolean }) {
                         fill
                         sizes="40px"
                         className="object-cover"
-                        unoptimized={it.image.startsWith("/uploads")}
                       />
                     </div>
                     <div className="flex-1 min-w-0">

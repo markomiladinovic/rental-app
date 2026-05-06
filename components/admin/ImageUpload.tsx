@@ -53,7 +53,6 @@ export default function ImageUpload({ currentImage, onImageChange, label = "Slik
               fill
               sizes="128px"
               className="object-cover"
-              unoptimized={currentImage.startsWith("/uploads")}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted text-2xl">

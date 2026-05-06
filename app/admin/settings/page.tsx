@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
                 <div className="flex items-start gap-3">
                   {settings[img.key] && (
                     <div className="relative w-24 h-16 rounded-xl overflow-hidden bg-cloud flex-shrink-0">
-                      <Image src={settings[img.key]} alt="" fill sizes="96px" className="object-cover" unoptimized />
+                      <Image src={settings[img.key]} alt="" fill sizes="96px" className="object-cover" />
                     </div>
                   )}
                   <ImageUpload

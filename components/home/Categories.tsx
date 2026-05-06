@@ -29,7 +29,6 @@ export default async function Categories() {
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
-              unoptimized={cat.image.startsWith("/uploads")}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-midnight/80 via-midnight/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6">

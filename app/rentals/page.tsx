@@ -89,7 +89,7 @@ export default function RentalsPage() {
       <div className="relative pt-28 pb-12 md:pt-36 md:pb-16 overflow-hidden">
         {headerImage && (
           <div className="absolute inset-0">
-            <Image src={headerImage} alt="" fill className="object-cover" unoptimized />
+            <Image src={headerImage} alt="" fill priority sizes="100vw" className="object-cover" />
             <div className="absolute inset-0 bg-white/70" />
           </div>
         )}

@@ -270,8 +270,9 @@ function BookingContent() {
               src={settings.header_image_booking || "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80"}
               alt=""
               fill
+              priority
+              sizes="100vw"
               className="object-cover"
-              unoptimized
             />
             <div className="absolute inset-0 bg-white/70" />
           </div>
@@ -511,7 +512,7 @@ function BookingContent() {
                 {itemsWithPrices.map((it) => (
                   <div key={`${it.productId}-${it.durationType}`} className="flex items-center gap-3 pb-3 border-b border-silver last:border-0 last:pb-0">
                     <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-                      <Image src={it.image} alt="" fill sizes="56px" className="object-cover" unoptimized={it.image.startsWith("/uploads")} />
+                      <Image src={it.image} alt="" fill sizes="56px" className="object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-heading font-semibold text-midnight truncate">{it.name}</p>

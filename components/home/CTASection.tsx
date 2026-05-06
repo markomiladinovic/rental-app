@@ -9,8 +9,8 @@ export default function CTASection() {
           src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80"
           alt="Adventure awaits"
           fill
+          sizes="100vw"
           className="object-cover"
-          unoptimized
         />
         <div className="absolute inset-0 bg-midnight/70" />
       </div>

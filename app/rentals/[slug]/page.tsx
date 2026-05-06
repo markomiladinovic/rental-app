@@ -113,7 +113,6 @@ export default function ProductDetailPage() {
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                   priority
-                  unoptimized={images[selectedImage].startsWith("/uploads")}
                 />
               </div>
               {images.length > 1 && (
@@ -126,7 +125,7 @@ export default function ProductDetailPage() {
                         selectedImage === i ? "border-ocean" : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <Image src={img} alt="" fill sizes="80px" className="object-cover" unoptimized={img.startsWith("/uploads")} />
+                      <Image src={img} alt="" fill sizes="80px" className="object-cover" />
                     </button>
                   ))}
                 </div>

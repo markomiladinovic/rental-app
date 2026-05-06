@@ -125,7 +125,6 @@ export default function AdminProductsPage() {
                   fill
                   sizes="80px"
                   className="object-cover"
-                  unoptimized={product.image.startsWith("/uploads")}
                 />
               </div>
               <div className="flex-1 min-w-0">
